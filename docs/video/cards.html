@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f6f3ec;color:#1b1b1f;font-family:Inter,system-ui,sans-serif}
+.card{width:1280px;height:720px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:0 96px;box-sizing:border-box}
+.logo{display:flex;align-items:center;gap:14px;font-weight:600;font-size:22px;position:absolute;top:56px;left:96px}
+.logo .l{width:28px;height:24px;display:flex;flex-direction:column;justify-content:space-between}.logo .l i{display:block;height:5px;border-radius:3px;background:#1b1b1f}.logo .l i:nth-child(2){width:65%;background:#e8462b}.logo .l i:nth-child(3){width:85%}
+h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:84px;line-height:1.02;margin:0;letter-spacing:-.01em}
+h1 em{color:#e8462b;font-style:italic}
+p{font-size:26px;color:#4a4a52;margin:26px 0 0;max-width:900px;line-height:1.4}
+.badge{position:absolute;bottom:56px;left:96px;font-size:18px;color:#7a7a82}
+.url{font-size:34px;font-weight:600;margin-top:30px}.mono{font-family:'JetBrains Mono',monospace;font-size:22px;margin-top:34px}
+ul{font-size:25px;line-height:1.6;margin:30px 0 0;padding-left:28px}
+.dark{background:#14141a;color:#e8e6df}.dark h1{color:#fff}.dark ul{color:#e8e6df}.dark .logo{color:#fff}.dark .logo .l i{background:#fff}.dark .logo .l i:nth-child(2){background:#e8462b}
+code{font-family:'JetBrains Mono',monospace;font-size:.85em;background:#2a2a33;padding:2px 6px;border-radius:5px}
+</style></head><body>
+<div class="card" id="title">
+  <div class="logo"><span class="l"><i></i><i></i><i></i></span>Attune</div>
+  <h1>Pages that <em>negotiate</em><br>with your agent,<br>not track you.</h1>
+  <p>Editions composed from the author’s own blocks, through WebMCP.</p>
+  <div class="badge">OpenAI WebMCP Challenge 2026 · attune.znehraks.workers.dev</div>
+</div>
+<div class="card dark" id="how">
+  <div class="logo"><span class="l"><i></i><i></i><i></i></span>Attune · under the hood</div>
+  <h1 style="font-size:56px">The page owns the variants.<br>The agent owns the context.<br>The human owns the decision.</h1>
+  <ul>
+    <li>two tool surfaces swapped with <code>AbortSignal</code> · 17 tools on an article · <code>readOnlyHint</code> on reads</li>
+    <li>loose schemas, strict validation, self-correcting errors, <code>next_step</code> in every result</li>
+    <li>deterministic composer with unit tests · 3 original articles × 3 levels × 2 languages</li>
+    <li>friction measured locally, shown on the page, shared only when the reader’s agent asks</li>
+    <li>server stores identifier-free counts only · Cloudflare Workers + Durable Objects</li>
+  </ul>
+</div>
+<div class="card" id="end">
+  <div class="logo"><span class="l"><i></i><i></i><i></i></span>Attune</div>
+  <h1 style="font-size:64px">Bring your agent.<br>The page will meet you <em>where you are</em>.</h1>
+  <div class="url">attune.znehraks.workers.dev</div>
+  <div class="mono">github.com/znehraks/attune · MIT</div>
+  <div class="badge">ChatGPT desktop browser · Chrome 149+ with WebMCP · or by hand, on every page</div>
+</div>
+</body></html>

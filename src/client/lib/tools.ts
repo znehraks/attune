@@ -432,6 +432,7 @@ export function buildSurface(env: ToolEnv): { name: string; specs: ToolSpec[] } 
       },
     },
     listArticles,
+    openArticle,
     getContext,
     forget,
   );

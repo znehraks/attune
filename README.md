@@ -6,7 +6,7 @@ Tell your agent how much time you have, what you already know, and what you're t
 
 It is a small publication (three articles, three levels, two languages) and, more importantly, a **pattern for the open web**: the visitor's agent declares five coarse facets through WebMCP; the page answers with a tailored edition built from author-approved blocks; the human sees the whole handshake and can change or erase it.
 
-![Expert, three-minute edition composed by an agent](docs/shots/article-expert-3min.png)
+![Expert, three-minute edition composed by an agent](docs/shots/article-expert-3min-top.png)
 
 ---
 
@@ -45,14 +45,14 @@ Attune tries a third way, which only became possible with WebMCP:
 1. **Fit.** The reader's context lives in their agent, not in a cookie. WebMCP lets that agent hand a page precisely the context the page needs, in the page's own vocabulary, with the human watching — a negotiation, not a leak. A header can say `Accept-Language: ko`; only a tool call can say "three minutes, knows MCP, wants to build something".
 2. **Better than the UI alone.** The Handshake panel exists for people without agents, but nobody wants to click through five facets on every article. The agent already knows them. And the two-way loop — the page reports reading friction, the agent asks the reader and swaps in a plainer block — has no equivalent in a static UI.
 3. **Newly possible.** Content that adapts *without* tracking *and* without hallucination: the page owns the variants, the agent owns the context, the human owns the decision. Interactives become tools an agent can operate mid-conversation. Publishers get demand signals without surveillance.
-4. **Implementation.** Tool surfaces follow the page: the home surface (`list_articles`, `declare_reader_context`, `open_article`, `get_reader_context`, `forget_me`) and the article surface (17 tools) are swapped with `AbortSignal`s; the article surface name encodes the edition (`article:webmcp:expert:ko`) so re-registrations are precise. Reads are `readOnlyHint`; nothing on this site returns untrusted third-party content. Schemas are loose (enums, ints), validation is strict in code with self-correcting errors, and every mutating result carries a `next_step`.
+4. **Implementation.** Tool surfaces follow the page: the home surface (`list_articles`, `declare_reader_context`, `open_article`, `get_reader_context`, `forget_me`) and the article surface (18 tools) are swapped with `AbortSignal`s; the article surface name encodes the edition (`article:webmcp:expert:ko`) so re-registrations are precise. Reads are `readOnlyHint`; nothing on this site returns untrusted third-party content. Schemas are loose (enums, ints), validation is strict in code with self-correcting errors, and every mutating result carries a `next_step`.
 
 ## Tool surface
 
 | Where | Tools |
 |---|---|
 | Home | `list_articles` · `declare_reader_context` · `open_article` · `get_reader_context` · `forget_me` |
-| Article | `get_edition` · `declare_reader_context` · `read_section` · `read_block` · `get_reading_friction` · `simplify_block` · `expand_section` · `ask_author` · `get_glossary` · `mark_known` · `set_interactive` · `get_interactive` · `save_place` · `resume_place` · `list_articles` · `get_reader_context` · `forget_me` |
+| Article | `get_edition` · `declare_reader_context` · `read_section` · `read_block` · `get_reading_friction` · `simplify_block` · `expand_section` · `ask_author` · `get_glossary` · `mark_known` · `set_interactive` · `get_interactive` · `save_place` · `resume_place` · `list_articles` · `open_article` · `get_reader_context` · `forget_me` |
 
 Design notes that matter for agents:
 
