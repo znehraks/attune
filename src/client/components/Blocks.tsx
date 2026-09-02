@@ -12,6 +12,7 @@ interface Props {
   extras: Set<string>;
   friction: Map<string, BlockFriction>;
   highlight: Set<string>;
+  focusIds?: Set<string>;
   interactives: Record<string, Params>;
   onInteractive: (id: string, params: Params) => void;
   onSimplify: (blockId: string) => void;
@@ -20,14 +21,14 @@ interface Props {
   showFriction: boolean;
 }
 
-export function Blocks({ article, blocks, lang, swaps, extras, friction, highlight, interactives, onInteractive, onSimplify, onExpand, canExpand, showFriction }: Props) {
+export function Blocks({ article, blocks, lang, swaps, extras, friction, highlight, focusIds, interactives, onInteractive, onSimplify, onExpand, canExpand, showFriction }: Props) {
   const t = (en: string, ko: string) => (lang === 'ko' ? ko : en);
   return (
     <div className="blocks">
       {blocks.map((b) => {
         const swappedFrom = Object.entries(swaps).find(([, to]) => to === b.id)?.[0];
         const fr = friction.get(b.id);
-        const cls = ['block', `k-${b.kind}`, highlight.has(b.id) ? 'hl' : '', extras.has(b.id) ? 'extra' : '', showFriction && fr && fr.score > 0 ? 'friction' : ''].filter(Boolean).join(' ');
+        const cls = ['block', `k-${b.kind}`, highlight.has(b.id) ? 'hl' : '', extras.has(b.id) ? 'extra' : '', showFriction && fr && fr.score > 0 ? 'friction' : '', focusIds?.has(b.id) ? 'in-focus' : ''].filter(Boolean).join(' ');
         return (
           <div className={cls} data-block={b.id} id={`b-${b.id}`} key={b.id}>
             {showFriction && fr && fr.score > 0 && (

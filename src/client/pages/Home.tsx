@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { composeEdition, type Level } from '../../shared/content';
 import { articles } from '../content';
 import { contextStore } from '../lib/context';
+import { displayStore } from '../lib/display';
 import { registry } from '../lib/webmcp';
 import { buildSurface } from '../lib/tools';
 import { navigate } from '../lib/router';
@@ -29,6 +30,7 @@ const LEVELS: Level[] = ['novice', 'intermediate', 'expert'];
 export function Home() {
   const [, force] = useState(0);
   useEffect(() => contextStore.subscribe(() => force((x) => x + 1)), []);
+  useEffect(() => displayStore.subscribe(() => force((x) => x + 1)), []);
   useEffect(() => {
     const { name, specs } = buildSurface({ articles, bridge: null, navigate, origin: location.origin });
     void registry.setSurface(name, specs);
@@ -91,8 +93,8 @@ export function Home() {
           <div>
             <h2 className="serif">{t('How it works', '작동 방식')}</h2>
             <ol className="how">
-              <li><b>{t('Your agent declares.', '에이전트가 선언합니다.')}</b> {t('Level, language, time budget, goal, concepts you know — five coarse facets, from the conversation you are already having. That is the whole handshake.', '수준, 언어, 시간, 목적, 아는 개념 — 이미 나누고 있던 대화에서 나온 다섯 가지 큼직한 정보. 그게 핸드셰이크의 전부입니다.')}</li>
-              <li><b>{t('The page composes.', '페이지가 구성합니다.')}</b> {t('Author-written blocks are filtered by level, prerequisites are pulled in, lower-priority blocks are trimmed to fit your time. Every decision has a reason you can see.', '저자가 쓴 블록을 수준으로 거르고, 선행 개념을 끌어오고, 시간에 맞춰 우선순위가 낮은 블록을 덜어냅니다. 모든 결정에는 볼 수 있는 이유가 있습니다.')}</li>
+              <li><b>{t('Your agent declares.', '에이전트가 선언합니다.')}</b> {t('Level, language, time budget, goal, concepts you know — and how you read best: vision, hands, attention, device, lighting. Your agent already knows these from its memory; it declares them on arrival, before you ask.', '수준, 언어, 시간, 목적, 아는 개념 — 그리고 시각·손·주의력·기기·조명 같은 읽기 편한 방식. 에이전트는 이미 메모리로 알고 있어서, 묻기 전에 도착하자마자 선언합니다.')}</li>
+              <li><b>{t('The page composes — words and screen.', '페이지가 구성합니다. 글도, 화면도.')}</b> {t('Author-written blocks are filtered by level, prerequisites pulled in, lower-priority blocks trimmed to your time; the page itself picks type size, contrast, font, spacing and layout from what you need. Every decision has a reason you can see.', '저자가 쓴 블록을 수준으로 거르고, 선행 개념을 끌어오고, 시간에 맞춰 덜어냅니다. 글자 크기·대비·글꼴·간격·배치도 페이지가 당신의 필요에서 고릅니다. 모든 결정에는 볼 수 있는 이유가 있습니다.')}</li>
               <li><b>{t('You stay in charge.', '주도권은 당신에게.')}</b> {t('Everything the page knows is on the page. Change it by hand, or say “forget me”.', '페이지가 아는 것은 전부 페이지 위에 있습니다. 직접 바꾸거나 “잊어줘”라고 하세요.')}</li>
               <li><b>{t('The page notices.', '페이지가 알아챕니다.')}</b> {t('Re-read a paragraph twice and your agent can ask the page where you got stuck — then swap in the author’s plainer version, right there.', '같은 문단을 두 번 되읽으면, 에이전트가 페이지에게 어디서 막혔는지 물을 수 있고, 저자가 쓴 쉬운 버전을 그 자리에 바꿔 넣습니다.')}</li>
             </ol>

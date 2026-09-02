@@ -111,3 +111,52 @@ test('handshake by hand: the panel recomposes the edition and the surface name f
   await expect.poll(async () => (await call(page, 'get_edition')).edition.minutes).toBeLessThan(e1.edition.full_minutes);
   await expect(page.getByText('Set by you')).toBeVisible();
 });
+
+test('needs handshake: the agent declares how the person reads best and the page redesigns itself', async ({ page }) => {
+  await page.addInitScript(WEBMCP_SHIM);
+  await page.goto('/');
+  await expect.poll(() => names(page)).toContain('declare_reader_needs');
+  const html = page.locator('html');
+  await expect(html).toHaveAttribute('data-theme', 'light');
+
+  // Arriving with a low-vision reader in a dark room, on a phone.
+  const r = await call(page, 'declare_reader_needs', { vision: 'low-vision', light: 'dark-room', device: 'phone', note: 'set from what you told me earlier' });
+  expect(r.ok).toBe(true);
+  expect(r.why.join(' ')).toMatch(/low vision/);
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+  await expect(html).toHaveAttribute('data-text', 'xl');
+  await expect(html).toHaveAttribute('data-targets', 'large');
+  await expect(page.locator('.note-box')).toContainText('set from what you told me earlier');
+
+  // Explicit preference wins over inference.
+  const s = await call(page, 'set_display', { theme: 'sepia', layout: 'focus' });
+  expect(s.changes.length).toBeGreaterThan(0);
+  await expect(html).toHaveAttribute('data-theme', 'sepia');
+  await expect(html).toHaveAttribute('data-layout', 'focus');
+  const gd = await call(page, 'get_display');
+  expect(gd.explicit_preferences).toContain('theme');
+
+  // Dyslexia implies plain-language content: the edition uses the author's plainer blocks.
+  const list = await call(page, 'list_articles');
+  await call(page, 'open_article', { slug: list.articles[0].slug });
+  await expect.poll(() => names(page), { timeout: 10000 }).toContain('focus_section');
+  const d = await call(page, 'declare_reader_needs', { reading: 'dyslexia' });
+  expect(d.changes.join(' ')).toMatch(/plain language|reading/);
+  await expect(html).toHaveAttribute('data-font', 'readable');
+  await expect(page.locator('.tag.swap').first()).toBeVisible();
+
+  // Focus one section: the rest dims.
+  const ed = await call(page, 'get_edition');
+  const sec = ed.outline.find((x: { blocks: number; section_id: string }) => x.blocks > 0 && x.section_id !== '_intro');
+  const f = await call(page, 'focus_section', { section_id: sec.section_id });
+  expect(f.focused_section).toBe(sec.section_id);
+  await expect(html).toHaveAttribute('data-spotlight', 'on');
+  await expect(page.locator('.block.in-focus').first()).toBeVisible();
+  await call(page, 'focus_section', {});
+  await expect(html).toHaveAttribute('data-focus', '');
+
+  // Forget everything: display goes back to defaults.
+  await call(page, 'forget_me');
+  await expect(html).toHaveAttribute('data-theme', 'light');
+  await expect(html).toHaveAttribute('data-text', 'normal');
+});

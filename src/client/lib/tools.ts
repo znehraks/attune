@@ -6,6 +6,8 @@ import type { Article, Block, Edition, Goal, Lang, Level, ReaderContext } from '
 import { blockMinutes, composeEdition, findFaq, outline } from '../../shared/content';
 import type { ToolSpec } from './webmcp';
 import { contextStore } from './context';
+import { displayStore } from './display';
+import { DISPLAY_PRESETS, contentImplications, type Display, type Needs } from '../../shared/needs';
 import type { FrictionTracker } from './friction';
 import type { Params } from '../components/Interactives';
 
@@ -81,6 +83,17 @@ function contextFromInput(input: Record<string, unknown>): Partial<ReaderContext
   return out;
 }
 
+export function describeDisplay() {
+  const { display, decisions, overridden } = displayStore.resolve();
+  return {
+    needs: displayStore.needs,
+    display,
+    inferred_from_needs: decisions.map((d) => `${d.setting} = ${String(d.value)} (${d.because})`),
+    explicit_preferences: overridden,
+    focused_section: displayStore.focusSection ?? null,
+  };
+}
+
 export function describeContext(ctx: ReaderContext) {
   return {
     level: ctx.level,
@@ -91,8 +104,126 @@ export function describeContext(ctx: ReaderContext) {
     unknown: ctx.unknown,
     plain_language: ctx.plainLanguage ?? false,
     note: ctx.note,
+    needs: displayStore.needs,
+    display: displayStore.display,
     stored: 'in this browser only (localStorage); nothing is sent to a server except identifier-free counts of which edition shapes were requested',
   };
+}
+
+const VISION = ['typical', 'low-vision', 'light-sensitive', 'color-blind', 'screen-reader'] as const;
+const MOTOR = ['typical', 'limited-precision', 'keyboard-only', 'one-handed'] as const;
+const READING = ['typical', 'dyslexia', 'easily-distracted', 'plain-language'] as const;
+const DEVICE = ['desktop', 'phone', 'tablet', 'unknown'] as const;
+const LIGHT = ['normal', 'dark-room', 'bright-sunlight'] as const;
+const THEMES = ['light', 'dark', 'sepia', 'high-contrast'] as const;
+const SIZES = ['small', 'normal', 'large', 'xl'] as const;
+const FONTS = ['serif', 'sans', 'readable'] as const;
+const SPACINGS = ['compact', 'normal', 'relaxed'] as const;
+const LAYOUTS = ['standard', 'focus', 'wide'] as const;
+const TARGETS = ['normal', 'large'] as const;
+
+function pick<T extends readonly string[]>(v: unknown, allowed: T, name: string): T[number] | undefined {
+  if (v === undefined) return undefined;
+  if (!allowed.includes(String(v))) throw new Error(`${name} must be one of ${allowed.join(', ')}`);
+  return String(v) as T[number];
+}
+
+export function needsTools(bridgeRecompose?: () => void): ToolSpec[] {
+  const declareNeeds: ToolSpec = {
+    name: 'declare_reader_needs',
+    title: 'Tell the page how the person reads best',
+    description:
+      'Call this as soon as the person arrives, before they ask, using what you already know about them from your memory and the current situation: vision (low vision, light sensitivity, color blindness, screen reader), motor control (limited precision, keyboard only, one-handed), reading (dyslexia, easily distracted, plain language), device, and lighting. The page — not you — decides how the interface adapts: type size, contrast, theme, font, spacing, layout, target size, motion, one-section-at-a-time. Declare only what you actually know; leave the rest out. Tell the person what you declared; they can change or erase it on the page. Call again when the situation changes (they moved to a phone, the room got dark).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        vision: { type: 'string', enum: VISION, description: 'How the person sees.' },
+        motor: { type: 'string', enum: MOTOR, description: 'How the person points, taps and types.' },
+        reading: { type: 'string', enum: READING, description: 'How the person reads best.' },
+        device: { type: 'string', enum: DEVICE, description: 'Device in use right now.' },
+        light: { type: 'string', enum: LIGHT, description: 'Lighting right now.' },
+        note: { type: 'string', maxLength: 160, description: 'Optional short note shown to the reader, e.g. "set from what you told me last week".' },
+      },
+      ...NO_EXTRA,
+    },
+    execute: async (input) => {
+      const partial: Partial<Needs> = {
+        vision: pick(input.vision, VISION, 'vision'),
+        motor: pick(input.motor, MOTOR, 'motor'),
+        reading: pick(input.reading, READING, 'reading'),
+        device: pick(input.device, DEVICE, 'device'),
+        light: pick(input.light, LIGHT, 'light'),
+        note: input.note !== undefined ? String(input.note).slice(0, 160) : undefined,
+      };
+      const changes = displayStore.declareNeeds(partial, 'agent');
+      const impl = contentImplications(displayStore.needs);
+      const contentChanges: string[] = [];
+      if (impl.plainLanguage || impl.preferNovice) {
+        contentChanges.push(...contextStore.update({ plainLanguage: impl.plainLanguage, level: impl.preferNovice ? 'novice' : undefined }, 'agent'));
+        bridgeRecompose?.();
+      }
+      const d = describeDisplay();
+      return { ok: true, changes: [...changes, ...contentChanges], needs: d.needs, display: d.display, why: d.inferred_from_needs, next_step: 'The page adapted. Tell the person in one sentence what changed and that they can adjust it on the page. Use set_display only for explicit preferences they state.' };
+    },
+  };
+  const setDisplay: ToolSpec = {
+    name: 'set_display',
+    title: 'Set explicit display preferences',
+    description:
+      `Apply preferences the person explicitly states ("darker", "bigger text", "hide everything else", "one section at a time"). These override what the page inferred from needs. Optionally start from a preset: ${Object.entries(DISPLAY_PRESETS).map(([k, v]) => `${k} (${v.label})`).join(', ')}.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        preset: { type: 'string', enum: Object.keys(DISPLAY_PRESETS), description: 'Apply a named preset first.' },
+        theme: { type: 'string', enum: THEMES },
+        text_size: { type: 'string', enum: SIZES },
+        font: { type: 'string', enum: FONTS, description: 'readable = hyperlegible sans with wider spacing.' },
+        spacing: { type: 'string', enum: SPACINGS },
+        layout: { type: 'string', enum: LAYOUTS, description: 'focus hides the side panels and narrows the column.' },
+        targets: { type: 'string', enum: TARGETS, description: 'large = bigger buttons and controls.' },
+        reduced_motion: { type: 'boolean' },
+        show_panels: { type: 'boolean', description: 'Show the Handshake panel and Agent console.' },
+        spotlight: { type: 'boolean', description: 'Dim everything except the section being read.' },
+        color_safe: { type: 'boolean', description: 'Never carry meaning by hue alone.' },
+      },
+      ...NO_EXTRA,
+    },
+    execute: async (input) => {
+      const partial: Partial<Display> = {};
+      if (input.preset !== undefined) {
+        const p = DISPLAY_PRESETS[String(input.preset)];
+        if (!p) throw new Error(`preset must be one of ${Object.keys(DISPLAY_PRESETS).join(', ')}`);
+        Object.assign(partial, p.display);
+      }
+      const theme = pick(input.theme, THEMES, 'theme');
+      if (theme) partial.theme = theme;
+      const size = pick(input.text_size, SIZES, 'text_size');
+      if (size) partial.textSize = size;
+      const font = pick(input.font, FONTS, 'font');
+      if (font) partial.font = font;
+      const sp = pick(input.spacing, SPACINGS, 'spacing');
+      if (sp) partial.spacing = sp;
+      const lay = pick(input.layout, LAYOUTS, 'layout');
+      if (lay) partial.layout = lay;
+      const tg = pick(input.targets, TARGETS, 'targets');
+      if (tg) partial.targets = tg;
+      if (input.reduced_motion !== undefined) partial.reducedMotion = Boolean(input.reduced_motion);
+      if (input.show_panels !== undefined) partial.showPanels = Boolean(input.show_panels);
+      if (input.spotlight !== undefined) partial.spotlight = Boolean(input.spotlight);
+      if (input.color_safe !== undefined) partial.colorSafe = Boolean(input.color_safe);
+      const changes = displayStore.setOverrides(partial, 'agent');
+      return { ok: true, changes, display: displayStore.display, next_step: 'Applied on the page. Mention what changed in one sentence.' };
+    },
+  };
+  const getDisplay: ToolSpec = {
+    name: 'get_display',
+    title: 'Read the current display',
+    description: 'The reader’s declared needs, the display the page derived from them (with reasons), any explicit preferences, and the focused section.',
+    inputSchema: { type: 'object', properties: {}, ...NO_EXTRA },
+    annotations: { readOnlyHint: true },
+    execute: async () => describeDisplay(),
+  };
+  return [declareNeeds, setDisplay, getDisplay];
 }
 
 export function editionSummary(bridge: ArticleBridge) {
@@ -109,6 +240,7 @@ export function editionSummary(bridge: ArticleBridge) {
     concept_gaps: edition.gaps,
     interactives: Object.keys(article.interactives ?? {}),
     reading_friction: fr.length ? fr.slice(0, 3).map((f) => ({ block_id: f.blockId, re_reads: f.reReads, lingered: f.lingered })) : 'none detected yet',
+    display: { needs: displayStore.needs, theme: displayStore.display.theme, text_size: displayStore.display.textSize, layout: displayStore.display.layout, focused_section: displayStore.focusSection ?? null },
     next_step: fr.length ? `The reader seems stuck on “${fr[0].blockId}”. Consider simplify_block or read_block + explain.` : 'Read what the human sees with read_section; reshape with declare_reader_context; answer questions with ask_author or read_block.',
   };
 }
@@ -155,6 +287,7 @@ export function buildSurface(env: ToolEnv): { name: string; specs: ToolSpec[] } 
     inputSchema: { type: 'object', properties: {}, ...NO_EXTRA },
     execute: async () => {
       contextStore.reset();
+      displayStore.reset();
       bridge?.friction.clear();
       try {
         for (const k of Object.keys(localStorage)) if (k.startsWith('attune:place:')) localStorage.removeItem(k);
@@ -203,7 +336,7 @@ export function buildSurface(env: ToolEnv): { name: string; specs: ToolSpec[] } 
     },
   };
 
-  if (!bridge) return { name: 'home', specs: [listArticles, declare, openArticle, getContext, forget] };
+  if (!bridge) return { name: 'home', specs: [listArticles, declare, ...needsTools(), openArticle, getContext, forget] };
 
   // ---------- Article surface ----------
   const { article } = bridge;
@@ -221,6 +354,20 @@ export function buildSurface(env: ToolEnv): { name: string; specs: ToolSpec[] } 
     return shown;
   };
 
+  const focusSection: ToolSpec = {
+    name: 'focus_section',
+    title: 'Focus one section',
+    description: 'Bring one section into focus: scroll to it and dim the rest of the article so the person can read just that part (useful when explaining, or for readers who are easily distracted). Pass no section_id to clear the focus.',
+    inputSchema: { type: 'object', properties: { section_id: { type: 'string', description: 'Section id from get_edition; omit to clear.' } }, ...NO_EXTRA },
+    execute: async (input) => {
+      const sid = input.section_id ? String(input.section_id) : null;
+      if (sid && !outline(bridge.edition, lang()).some((s) => s.id === sid)) throw new Error(`No section “${sid}”. Sections: ${outline(bridge.edition, lang()).map((s) => s.id).join(', ')}`);
+      displayStore.setFocus(sid, 'agent');
+      if (sid) bridge.scrollTo(sid === '_intro' ? bridge.edition.blocks[0]?.id ?? '' : sid);
+      return { ok: true, focused_section: sid, next_step: sid ? 'The rest of the page is dimmed. Clear it with focus_section when done.' : 'Focus cleared.' };
+    },
+  };
+
   const specs: ToolSpec[] = [
     {
       name: 'get_edition',
@@ -231,6 +378,8 @@ export function buildSurface(env: ToolEnv): { name: string; specs: ToolSpec[] } 
       execute: async () => editionSummary(bridge),
     },
     declare,
+    ...needsTools(() => bridge.recompose('agent')),
+    focusSection,
     {
       name: 'read_section',
       title: 'Read a section as shown',

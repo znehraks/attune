@@ -3,6 +3,7 @@ import type { Block, Edition } from '../../shared/content';
 import { blockMinutes, composeEdition, deeperBlocks, simplerVersion } from '../../shared/content';
 import { bySlug, articles } from '../content';
 import { contextStore } from '../lib/context';
+import { displayStore } from '../lib/display';
 import { FrictionTracker, type BlockFriction } from '../lib/friction';
 import { registry } from '../lib/webmcp';
 import { buildSurface, type ArticleBridge } from '../lib/tools';
@@ -47,6 +48,43 @@ export function ArticlePage({ slug }: { slug: string }) {
   }, []);
 
   useEffect(() => contextStore.subscribe(rerender), [rerender]);
+  useEffect(() => displayStore.subscribe(rerender), [rerender]);
+
+  // Spotlight: keep the section in view (or the focused section) bright, dim the rest.
+  const [inFocus, setInFocus] = useState<string | null>(null);
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const explicit = displayStore.focusSection;
+      if (explicit) {
+        setInFocus(explicit);
+        return;
+      }
+      if (!displayStore.display.spotlight) {
+        setInFocus(null);
+        return;
+      }
+      const mid = window.innerHeight * 0.4;
+      let best: string | null = null;
+      for (const el of document.querySelectorAll<HTMLElement>('[data-block]')) {
+        const r = el.getBoundingClientRect();
+        if (r.top <= mid) best = el.dataset.block ?? best;
+      }
+      setInFocus(best);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    const unsub = displayStore.subscribe(update);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      unsub();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
 
   // Friction tracking over the rendered blocks
   useEffect(() => {
@@ -170,6 +208,17 @@ export function ArticlePage({ slug }: { slug: string }) {
     return id;
   }, [placeKey, scrollTo, flash]);
 
+  // Plain language: show the author's plainer rewrite wherever one exists.
+  const effectiveSwaps = useMemo(() => {
+    if (!article || !edition || !edition.context.plainLanguage) return swaps;
+    const auto: Record<string, string> = {};
+    for (const b of edition.blocks) {
+      const plainer = article.blocks.find((x) => x.simplerOf === b.id);
+      if (plainer) auto[b.id] = plainer.id;
+    }
+    return { ...auto, ...swaps };
+  }, [article, edition, swaps]);
+
   // Visible block list = edition blocks with swaps applied, plus extras placed after their section's last block.
   const visible = useMemo(() => {
     if (!article || !edition) return [] as Block[];
@@ -194,13 +243,23 @@ export function ArticlePage({ slug }: { slug: string }) {
         flushSection();
         currentSection = b.id;
       }
-      const swap = swaps[b.id];
+      const swap = effectiveSwaps[b.id];
       out.push(swap ? article.blocks.find((x) => x.id === swap) ?? b : b);
     }
     flushSection();
     for (const list of bySection.values()) out.push(...list);
     return out;
-  }, [article, edition, extras, swaps]);
+  }, [article, edition, extras, effectiveSwaps]);
+
+  // Which blocks belong to the focused section (a section id, or '_intro' for blocks before the first heading)?
+  const focusIds = useMemo(() => {
+    if (!inFocus) return new Set<string>();
+    const target = inFocus;
+    // If the focus is a block id (from scroll tracking), resolve to its section.
+    const blk = visible.find((b) => b.id === target);
+    const sectionId = blk ? (blk.kind === 'heading' ? blk.id : blk.section ?? '_intro') : target;
+    return new Set(visible.filter((b) => (sectionId === '_intro' ? !b.section && b.kind !== 'heading' : b.id === sectionId || b.section === sectionId)).map((b) => b.id));
+  }, [inFocus, visible]);
 
   // Bridge for tools
   const bridgeRef = useRef<ArticleBridge | null>(null);
@@ -263,8 +322,9 @@ export function ArticlePage({ slug }: { slug: string }) {
             article={article}
             blocks={visible}
             lang={lang}
-            swaps={swaps}
+            swaps={effectiveSwaps}
             extras={new Set(extras)}
+            focusIds={focusIds}
             friction={frictionMap}
             highlight={highlight}
             interactives={interactives}
@@ -298,6 +358,20 @@ export function ArticlePage({ slug }: { slug: string }) {
           <AgentConsole registry={registry} compact />
         </aside>
       </div>
+      {(displayStore.display.layout === 'focus' || displayStore.focusSection) && (
+        <div className="display-fab row" style={{ gap: 8 }}>
+          {displayStore.focusSection && (
+            <button className="btn sm" onClick={() => displayStore.setFocus(null, 'hand')}>
+              {t('Show whole article', '전체 보기')}
+            </button>
+          )}
+          {displayStore.display.layout === 'focus' && (
+            <button className="btn sm primary" onClick={() => displayStore.setOverrides({ layout: 'standard', showPanels: true }, 'hand')} title={t('Show the Handshake panel', '핸드셰이크 패널 보기')}>
+              ⚙ {t('Display', '화면')}
+            </button>
+          )}
+        </div>
+      )}
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
