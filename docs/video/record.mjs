@@ -69,6 +69,21 @@ await A.mouse.wheel(0, 400); await sleep(3500);
 await A.mouse.wheel(0, 400); await sleep(3000);
 await until('04-korean', st, 300);
 
+// S4.5 needs — low vision in a dark room, declared by the agent on arrival
+st = Date.now(); mark('045-needs');
+await cap(A, S['045-needs'].caption, SUB);
+await agent(A, 'declare_reader_context', { level: 'intermediate', language: 'en', time_minutes: 0 });
+await sleep(2500);
+await agent(A, 'declare_reader_needs', { vision: 'low-vision', light: 'dark-room', note: 'set from what you told me earlier' });
+await sleep(4000);
+await A.mouse.wheel(0, 300); await sleep(2500);
+await A.mouse.wheel(0, -300); await sleep(800);
+await agent(A, 'declare_reader_needs', { vision: 'typical', light: 'normal', reading: 'easily-distracted' });
+await sleep(3000);
+await agent(A, 'declare_reader_needs', { reading: 'typical' });
+await agent(A, 'set_display', { preset: 'default', layout: 'standard', show_panels: true, theme: 'light', text_size: 'normal', font: 'serif', spacing: 'normal', targets: 'normal', spotlight: false, reduced_motion: false });
+await until('045-needs', st, 300);
+
 // S5 friction → simplify (english intermediate so the simplify target has a plainer version)
 st = Date.now(); mark('05-friction');
 await cap(A, S['05-friction'].caption, SUB);
