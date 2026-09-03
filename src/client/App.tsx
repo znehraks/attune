@@ -3,6 +3,7 @@ import { Home } from './pages/Home';
 import { ArticlePage } from './pages/Article';
 import { About } from './pages/About';
 import { Insights } from './pages/Insights';
+import { Studio } from './pages/Studio';
 import { useEffect, useState } from 'react';
 import { demoStore } from './lib/demo';
 import { contextStore } from './lib/context';
@@ -26,7 +27,9 @@ export function App() {
   const [path] = usePath();
   let m = path.match(/^\/a\/([a-z0-9-]{2,40})\/?$/);
   let page = <Home />;
+  const st = path.match(/^\/studio\/([a-z0-9-]{2,40})\/?$/);
   if (m) page = <ArticlePage slug={m[1]} key={m[1]} />;
+  else if (st) page = <Studio slug={st[1]} key={`studio-${st[1]}`} />;
   else {
     m = path.match(/^\/insights\/([a-z0-9-]{2,40})\/?$/);
     if (m) page = <Insights slug={m[1]} key={m[1]} />;

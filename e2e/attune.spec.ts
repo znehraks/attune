@@ -196,3 +196,38 @@ test('mobile: home stacks to one column and a low-vision reader still gets a rea
   await expect(page.locator('.side-toggle')).toBeVisible();
   await ctx.close();
 });
+
+test('author studio: the author’s agent drafts a plainer version and a novice variant; the author approves by click; readers get them', async ({ page }) => {
+  await page.addInitScript(WEBMCP_SHIM);
+  await page.goto('/studio/compound-interest');
+  await expect.poll(() => names(page)).toContain('propose_plainer_version');
+  expect(await names(page)).not.toContain('approve_proposal');
+  const cov = await call(page, 'get_article_coverage');
+  expect(cov.blocks_without_plainer_version.length).toBeGreaterThan(0);
+  const target = cov.blocks_without_plainer_version[0] as string;
+  const src = await call(page, 'get_block_source', { block_id: target });
+  expect(src.text.en.length).toBeGreaterThan(20);
+
+  const p1 = await call(page, 'propose_plainer_version', { block_id: target, text_en: 'This is the same idea in everyday words: money that earns money keeps earning on what it earned, so it grows faster every year.', text_ko: '같은 내용을 쉬운 말로: 돈이 번 돈이 다시 돈을 벌기 때문에 해마다 더 빨리 불어납니다.', rationale: 'dense paragraph, readers re-read it' });
+  expect(p1.status).toBe('pending');
+  await expect(page.locator('.proposal').getByText('dense paragraph, readers re-read it')).toBeVisible();
+
+  const one = cov.blocks_written_for_one_level_only.find((b: { level: string }) => b.level === 'expert');
+  if (one) {
+    const p2 = await call(page, 'propose_level_variant', { block_id: one.block_id, level: 'novice', text_en: 'Here is the beginner version of that idea, with a small example instead of the formula.', text_ko: '그 내용을 입문자용으로, 공식 대신 작은 예시로 설명합니다.' });
+    expect(p2.status).toBe('pending');
+  }
+
+  // Approving is a click, never a tool.
+  await page.getByRole('button', { name: /Approve — publish this block/ }).first().click();
+  const list = await call(page, 'list_proposals');
+  expect(list.proposals.some((p: { status: string }) => p.status === 'approved')).toBe(true);
+
+  // The reader view now has the approved plainer version available to simplify_block.
+  await page.goto('/a/compound-interest');
+  await expect.poll(() => names(page)).toContain('simplify_block');
+  await call(page, 'declare_reader_context', { level: 'expert', language: 'en', time_minutes: 0 });
+  const sb = await call(page, 'simplify_block', { block_id: target });
+  expect(sb.ok).toBe(true);
+  expect(sb.text).toContain('everyday words');
+});

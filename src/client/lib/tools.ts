@@ -591,3 +591,127 @@ export function buildSurface(env: ToolEnv): { name: string; specs: ToolSpec[] } 
   );
   return { name: `article:${article.slug}:${bridge.edition.context.level}:${bridge.edition.context.language}`, specs };
 }
+
+// ---------- Author studio surface ----------
+import { coverage as coverageOf, studioStore } from './overlay';
+
+export interface StudioEnv {
+  article: Article;
+  base: Article;
+  origin: string;
+  flash: (id: string) => void;
+}
+
+export function buildStudioSurface(env: StudioEnv): { name: string; specs: ToolSpec[] } {
+  const { article, base } = env;
+  const LEVELS: Level[] = ['novice', 'intermediate', 'expert'];
+  const specs: ToolSpec[] = [
+    {
+      name: 'get_article_coverage',
+      title: 'Where the article is thin',
+      description:
+        'For this article: per section, how many blocks exist for each level; which blocks have no plainer version; which blocks exist for one level only; FAQ count. Use it to decide what to draft. Drafts you propose appear on the page for the author to approve — nothing goes live without their click.',
+      inputSchema: { type: 'object', properties: {}, ...NO_EXTRA },
+      annotations: { readOnlyHint: true },
+      execute: async () => ({ article: article.slug, ...coverageOf(article), pending_proposals: studioStore.pending(article.slug).length, approved_proposals: studioStore.approved(article.slug).length, next_step: 'Call get_block_source for a thin block, then propose_level_variant or propose_plainer_version with your draft in both languages.' }),
+    },
+    {
+      name: 'get_block_source',
+      title: 'Read a block to rewrite',
+      description: 'Full source of one block (both languages, levels, concepts it teaches/requires, section) so you can draft a variant that keeps the facts and the author’s voice.',
+      inputSchema: { type: 'object', properties: { block_id: { type: 'string' } }, required: ['block_id'], ...NO_EXTRA },
+      annotations: { readOnlyHint: true },
+      execute: async (input) => {
+        const b = article.blocks.find((x) => x.id === input.block_id);
+        if (!b) throw new Error(`No block “${input.block_id}”. Use get_article_coverage for ids.`);
+        return { block_id: b.id, kind: b.kind, levels: b.levels, section: b.section, priority: b.priority, teaches: b.teaches, requires: b.requires, text: b.text, concepts: article.concepts.filter((c) => (b.teaches ?? []).concat(b.requires ?? []).includes(c.id)).map((c) => ({ id: c.id, en: c.definition.en, ko: c.definition.ko })), rules: 'Keep every fact and number. Do not add claims. Under 120 English words. Korean must be a faithful translation, not a summary. Markdown-lite only (**bold**, `code`).' };
+      },
+    },
+    {
+      name: 'propose_level_variant',
+      title: 'Draft this idea for another level',
+      description: 'Propose a rewrite of a block for a different reader level (novice: plain words and an analogy; intermediate: the mechanism; expert: edge cases and trade-offs). Provide English and Korean. The draft appears in the studio as pending; the author approves or rejects it on the page. Once approved, readers at that level get it in their editions.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          block_id: { type: 'string', description: 'Source block (from get_article_coverage).' },
+          level: { type: 'string', enum: LEVELS, description: 'Level the draft is written for.' },
+          text_en: { type: 'string', minLength: 20, maxLength: 1200 },
+          text_ko: { type: 'string', minLength: 10, maxLength: 1200 },
+          rationale: { type: 'string', maxLength: 200, description: 'One line for the author: why this block, what changed.' },
+        },
+        required: ['block_id', 'level', 'text_en', 'text_ko'],
+        ...NO_EXTRA,
+      },
+      execute: async (input) => {
+        const b = article.blocks.find((x) => x.id === input.block_id);
+        if (!b) throw new Error(`No block “${input.block_id}”.`);
+        const level = pick(input.level, LEVELS, 'level')!;
+        if (b.levels.includes(level) && b.levels.length === 1) throw new Error(`Block “${b.id}” is already written for ${level}. Pick a level it lacks: ${LEVELS.filter((l) => !b.levels.includes(l)).join(', ') || '(none)'}`);
+        const p = studioStore.propose(article.slug, { by: 'agent', kind: 'level', sourceId: b.id, level, text: { en: String(input.text_en), ko: String(input.text_ko) }, rationale: input.rationale ? String(input.rationale) : undefined });
+        env.flash(p.id);
+        return { ok: true, proposal_id: p.id, status: 'pending', next_step: 'The author sees the draft on the page. Do not approve it yourself — that is their click. Continue with the next thin block or stop.' };
+      },
+    },
+    {
+      name: 'propose_plainer_version',
+      title: 'Draft a plainer version',
+      description: 'Propose the plainer rewrite of a dense block — same facts, everyday words, shorter sentences — in English and Korean. Once the author approves it, readers’ agents can swap it in with simplify_block when the page notices someone re-reading that block.',
+      inputSchema: {
+        type: 'object',
+        properties: { block_id: { type: 'string' }, text_en: { type: 'string', minLength: 20, maxLength: 1000 }, text_ko: { type: 'string', minLength: 10, maxLength: 1000 }, rationale: { type: 'string', maxLength: 200 } },
+        required: ['block_id', 'text_en', 'text_ko'],
+        ...NO_EXTRA,
+      },
+      execute: async (input) => {
+        const b = article.blocks.find((x) => x.id === input.block_id);
+        if (!b) throw new Error(`No block “${input.block_id}”.`);
+        if (article.blocks.some((x) => x.simplerOf === b.id)) throw new Error(`Block “${b.id}” already has a plainer version.`);
+        const p = studioStore.propose(article.slug, { by: 'agent', kind: 'plainer', sourceId: b.id, text: { en: String(input.text_en), ko: String(input.text_ko) }, rationale: input.rationale ? String(input.rationale) : undefined });
+        env.flash(p.id);
+        return { ok: true, proposal_id: p.id, status: 'pending', next_step: 'Pending the author’s approval on the page.' };
+      },
+    },
+    {
+      name: 'propose_faq',
+      title: 'Draft an author FAQ entry',
+      description: 'Propose a question readers are likely to ask and an answer grounded only in this article (say so if the article does not cover it). Both languages. The author approves on the page; then ask_author can return it to readers.',
+      inputSchema: {
+        type: 'object',
+        properties: { question_en: { type: 'string', minLength: 5, maxLength: 200 }, question_ko: { type: 'string', minLength: 2, maxLength: 200 }, answer_en: { type: 'string', minLength: 10, maxLength: 800 }, answer_ko: { type: 'string', minLength: 5, maxLength: 800 }, keywords: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 8, description: 'Lowercase match words in both languages.' } },
+        required: ['question_en', 'question_ko', 'answer_en', 'answer_ko', 'keywords'],
+        ...NO_EXTRA,
+      },
+      execute: async (input) => {
+        const faq = { id: `faq-${Math.random().toString(36).slice(2, 8)}`, keywords: (input.keywords as string[]).map((k) => String(k).toLowerCase()), question: { en: String(input.question_en), ko: String(input.question_ko) }, answer: { en: String(input.answer_en), ko: String(input.answer_ko) } };
+        const p = studioStore.propose(article.slug, { by: 'agent', kind: 'faq', faq });
+        env.flash(p.id);
+        return { ok: true, proposal_id: p.id, status: 'pending' };
+      },
+    },
+    {
+      name: 'list_proposals',
+      title: 'List drafts and their status',
+      description: 'All drafts proposed for this article with status pending / approved / rejected.',
+      inputSchema: { type: 'object', properties: {}, ...NO_EXTRA },
+      annotations: { readOnlyHint: true },
+      execute: async () => ({ proposals: studioStore.state(article.slug).proposals.map((p) => ({ id: p.id, kind: p.kind, source: p.sourceId, level: p.level, status: p.status, by: p.by, preview: (p.text?.en ?? p.faq?.question.en ?? '').slice(0, 100) })) }),
+    },
+    {
+      name: 'withdraw_proposal',
+      title: 'Withdraw a pending draft',
+      description: 'Remove one of your own pending drafts (approved or rejected ones stay as the author decided).',
+      inputSchema: { type: 'object', properties: { proposal_id: { type: 'string' } }, required: ['proposal_id'], ...NO_EXTRA },
+      execute: async (input) => ({ ok: studioStore.withdraw(article.slug, String(input.proposal_id)) }),
+    },
+    {
+      name: 'export_article',
+      title: 'Export the article with approved drafts',
+      description: 'The article as JSON with every approved draft merged in — the content model any Attune-style site consumes.',
+      inputSchema: { type: 'object', properties: {}, ...NO_EXTRA },
+      annotations: { readOnlyHint: true },
+      execute: async () => ({ slug: article.slug, blocks: article.blocks.length, base_blocks: base.blocks.length, faq: article.faq.length, json_url: `${env.origin}/studio/${article.slug}#export`, note: 'Download from the Export button on the page.' }),
+    },
+  ];
+  return { name: `studio:${article.slug}`, specs };
+}

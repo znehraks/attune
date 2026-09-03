@@ -4,6 +4,7 @@ import { blockMinutes, composeEdition, deeperBlocks, simplerVersion } from '../.
 import { bySlug, articles } from '../content';
 import { contextStore } from '../lib/context';
 import { displayStore } from '../lib/display';
+import { studioStore } from '../lib/overlay';
 import { FrictionTracker, type BlockFriction } from '../lib/friction';
 import { registry } from '../lib/webmcp';
 import { buildSurface, type ArticleBridge } from '../lib/tools';
@@ -139,6 +140,8 @@ export function ArticlePage({ slug }: { slug: string }) {
     },
     [article, report],
   );
+
+  useEffect(() => studioStore.subscribe(() => recompose('hand')), [recompose]);
 
   const scrollTo = useCallback((blockId: string) => {
     const el = document.getElementById(`b-${blockId}`);
@@ -390,7 +393,7 @@ export function ArticlePage({ slug }: { slug: string }) {
               {t('Show where I paused (visible to my agent only if it asks)', '내가 멈춘 곳 표시 (에이전트가 요청할 때만 볼 수 있음)')}
               {frictionCount > 0 && <span className="pill warn">{frictionCount}</span>}
             </label>
-            <span>{t('Every word above was written by the author. Editions are composed, never generated.', '위의 모든 문장은 저자가 썼습니다. 판은 조합될 뿐, 생성되지 않습니다.')}</span>
+            <span>{t('Every word above was written or approved by the author. Editions are composed, never generated.', '위의 모든 문장은 저자가 쓰거나 승인했습니다. 판은 조합될 뿐, 생성되지 않습니다.')} <a href={`/studio/${article.slug}`} onClick={(e) => { e.preventDefault(); navigate(`/studio/${article.slug}`); }}>{t('Author studio →', '저자 스튜디오 →')}</a></span>
           </footer>
         </main>
         <aside className={`side${sideOpen ? '' : ' mobile-collapsed'}`}>

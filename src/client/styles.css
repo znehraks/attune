@@ -360,3 +360,17 @@ main.ko .serif { font-family: 'Noto Serif KR', 'Instrument Serif', serif; }
 #demo-cap { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); max-width: min(920px, 92vw); background: rgba(20,20,26,.92); color: #fff; font: 500 16px/1.4 var(--sans); padding: 12px 18px; border-radius: 12px; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,.35); text-align: center; display: flex; gap: 12px; align-items: center; }
 #demo-cap small { color: #cfcdc5; font-size: 12px; }
 #demo-cap .btn { padding: 4px 10px; font-size: 12px; background: #2a2a33; color: #fff; border-color: #3a3a45; }
+
+/* Studio */
+.cov { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.cov th, .cov td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.cov td.zero { color: var(--bad); font-weight: 600; }
+.proposal { transition: box-shadow .3s; }
+.proposal.hl { box-shadow: 0 0 0 3px rgba(232,70,43,.35); }
+.proposal.approved { border-color: #bfe6d0; }
+.proposal.rejected { opacity: .6; }
+.diff { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.diff-col { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14.5px; line-height: 1.55; }
+.diff-col.draft { border-color: var(--accent); background: rgba(232,70,43,.04); }
+.diff-col p { margin: 6px 0 0; }
+@media (max-width: 800px) { .diff { grid-template-columns: 1fr; } }

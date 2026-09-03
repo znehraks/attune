@@ -1,5 +1,6 @@
 import { useEffect as useTitleEffect } from 'react';
 import { TopBar } from './Home';
+import { navigate } from '../lib/router';
 
 export function About() {
   useTitleEffect(() => {
@@ -38,6 +39,10 @@ export function About() {
   execute: async (ctx) => { store.update(ctx); return { outline: compose(article, store.get()) }; }
 }, { signal: surface.signal });`}</code>
         </pre>
+        <h2 className="serif">4. Let the author’s agent draft the rest</h2>
+        <p>
+          Writing every idea at three levels in two languages is the cost that kept this pattern theoretical. The <a href="/studio/compound-interest" onClick={(e) => { e.preventDefault(); navigate('/studio/compound-interest'); }}>author studio</a> flips it: the author’s own agent reads the coverage, drafts the missing level variants, plainer rewrites and FAQ entries as tool calls, and the author approves each one with a click. Readers’ agents compose only from what was approved. Both sides of the page are agent-native; both decisions stay human.
+        </p>
         <h2 className="serif">Why this beats “just summarize it for me”</h2>
         <ul>
           <li><b>Accuracy:</b> editions are made of the author’s blocks; a summarizer invents transitions and sometimes facts.</li>
