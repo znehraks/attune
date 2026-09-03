@@ -2,11 +2,11 @@
 
 **Live:** https://attune.znehraks.workers.dev · **Repo:** https://github.com/znehraks/attune · **License:** MIT · Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/) (Aug 25 – Sep 3, 2026)
 
-Tell your agent how much time you have, what you already know, and what you're trying to do. Each page on Attune composes an **edition** for you — from the author's own blocks, never generated — and shows you exactly what it was told. No cookies, no profile, no tracking. Interactives your agent can operate. A page that notices where you got stuck and swaps in the author's plainer version, right there.
+Tell your agent how much time you have, what you already know, and what you're trying to do. Each page on Attune composes an **edition** for you from author-approved blocks and shows you exactly what it was told. There are no cookies or server-side reader profiles: coarse declarations stay in this browser, while the server sees only identifier-free aggregate edition shapes. Interactives your agent can operate. A page that notices where you got stuck and swaps in the author's plainer version, right there.
 
 It is a small publication (three articles, three levels, two languages) and, more importantly, a **pattern for the open web**: the visitor's agent declares what it already knows about the person through WebMCP — how much time they have, what they know, and **how they read best** (vision, hands, attention, device, lighting); the page answers with a tailored edition built from author-approved blocks **and a screen designed for that person** (type size, contrast, font, spacing, layout, target size, motion, one section at a time); the human sees the whole handshake and can change or erase it.
 
-**In one tool call:** the compound-interest article goes from 8.2 minutes / 28 blocks to **2.9 minutes / 12 blocks** for an expert who already knows compounding — and in a second call, from a light serif page to **dark, extra-large, hyperlegible type with big controls** for a low-vision reader in a dark room. Every left-out block and every design choice carries a visible reason.
+**In one tool call:** the compound-interest article goes from 7.8 minutes / 28 blocks to **2.9 minutes / 12 blocks** in Korean for an expert who already knows compounding and wants to decide whether a fee matters — and in a second call, from a light serif page to **dark, extra-large, hyperlegible type with big controls** for a low-vision reader in a dark room. Every left-out block and every design choice carries a visible reason.
 
 | Default page | Expert, 3 minutes, knows the basics | Low vision, dark room |
 |---|---|---|
@@ -20,7 +20,7 @@ It is a small publication (three articles, three levels, two languages) and, mor
 
 **No agent at hand?** Press **▶ Watch a 60-second demo** on the home page, or open any article with `?judge=1` (e.g. `/a/compound-interest?judge=1`): a scripted demo calls the very same registered tools, with captions, so you see the negotiation without a WebMCP browser.
 
-Tests: 16 unit (edition composer, needs → design) · 5 Playwright e2e that drive every tool through a `document.modelContext` stand-in, on desktop and on a 390-px phone, against both local and production.
+Tests: 17 unit (edition composer, needs → design) · 6 Playwright e2e that drive every tool through a `document.modelContext` stand-in, on desktop and on a 390-px phone, against both local and production.
 
 ---
 
@@ -29,7 +29,7 @@ Tests: 16 unit (edition composer, needs → design) · 5 Playwright e2e that dri
 ### With ChatGPT (the intended experience)
 1. Open **https://attune.znehraks.workers.dev** in the built-in browser of the **ChatGPT desktop app** (model **Sol** or **Terra**).
 2. Say: *"I have three minutes, I'm a web developer who already knows MCP, and I read Korean. Open the WebMCP article."* — ChatGPT calls `declare_reader_context` and `open_article`; the page composes a three-minute expert edition in Korean that skips what you know, and the Handshake panel shows what was declared.
-3. Say *"I have low vision and I'm reading in a dark room"* — the page turns dark with extra-large hyperlegible type, roomy spacing and big controls, and explains each choice in the Handshake panel. (Your agent will do this on arrival, unprompted, if it already knows this about you: the tool description asks it to.)
+3. Say *"I have low vision and I'm reading in a dark room"* — the page turns dark with extra-large hyperlegible type, roomy spacing and big controls, and explains each choice in the Handshake panel. (The tool description asks an agent that already knows this context to declare it on arrival; actual behavior depends on the client and model.)
 4. Read for a moment, re-read one paragraph, then ask *"where did I get stuck?"* — `get_reading_friction` names the block; *"make it simpler"* — `simplify_block` swaps in the author's plainer version with a highlight.
 5. On the compound-interest article: *"what if I put in 500 a month for 40 years with a 1% fee?"* — `set_interactive` drives the calculator on the page and returns the numbers.
 6. *"Did the author say anything about iframes?"* — `ask_author` returns the author's own answer, or says it wasn't covered. *"Forget me"* — `forget_me` erases everything.
@@ -51,21 +51,21 @@ Press **▶ Watch a 60-second demo** on the home page (or add `?judge=1` to any 
 
 Personalization on the web today means **surveillance**: trackers infer who you are from behaviour and sell that inference. Reading with an AI today means **summarization**: the agent scrapes the page and rewrites it — losing the figures and interactives, sometimes inventing details, and cutting the author out of the loop.
 
-Attune tries a third way, which only became possible with WebMCP:
+Attune tries a third way, using WebMCP as the live semantic contract between the reader's agent and the page:
 
-- **The reader's agent declares, on purpose, a handful of coarse facets** — level, language, time budget, goal, concepts already known, and how the person reads best (vision, hands, attention, device, lighting) — taken from what the agent already knows. Nothing else is shared. Everything declared is shown on the page, editable and erasable.
+- **The reader's agent declares, on purpose, a handful of coarse facets** — level, language, time budget, goal, concepts already known, and how the person reads best (vision, hands, attention, device, lighting) — taken from what the agent already knows. Only explicitly supplied fields are shared. Everything declared is shown on the page, editable and erasable.
 - **The page designs the screen; the agent does not touch CSS.** From declared needs the page picks among layouts, themes and type scales its designers prepared — dark for a dark room, extra-large hyperlegible type and big targets for low vision, a sepia readable-font edition for dyslexia, a focus layout with one section lit at a time for readers who are easily distracted, color-safe encoding for color blindness, a linear layout for screen readers. Every choice carries a reason. Explicit preferences ("darker", "bigger") override the inference.
 - **The page composes, deterministically, from author-written blocks.** Filter by level, pull in prerequisites the reader lacks, skip what they know, trim lower-priority blocks to the time budget, drop empty sections. Every block gets a reason. No model rewrites a word.
 - **The page stays a page.** Figures stay figures, calculators recalculate with the parameters your agent sets, and the author's "plainer version" of a hard paragraph is one tool call away — at the spot where the page noticed you re-reading.
-- **Adoption is a content model, not a platform.** An existing article becomes Attune-ready by splitting it into blocks and adding facets (`levels`, `priority`, `teaches`, `requires`, `goals`, `simplerOf`) — `src/client/content/AUTHORING.md` is the whole guide, `scripts/validate-article.mjs` checks the result, and `src/shared/content.ts` is a dependency-free composer any site can copy. The tool surface is a dozen small, read-mostly tools any page can register.
-- **The author learns, anonymously.** The only thing the server stores is a count of which edition shapes were requested — see *"what readers asked for"* under any article. No identifiers, ever.
+- **Adoption is a content model, not a platform.** An existing article becomes Attune-ready by splitting it into blocks and adding facets (`levels`, `priority`, `teaches`, `requires`, `goals`, `simplerOf`) — `src/client/content/AUTHORING.md` is the whole guide, `scripts/validate-article.mjs` checks the result, and `src/shared/content.ts` is a dependency-free composer any site can copy. Small tools are scoped to the home, article and studio surfaces.
+- **The author learns, anonymously.** The only thing the server stores is a count of which edition shapes were requested — see *"what readers asked for"* under any article. Attune's application data model stores no reader identifier.
 
 ## Why WebMCP fits (the four submission questions)
 
-1. **Fit.** The reader's context lives in their agent, not in a cookie. WebMCP lets that agent hand a page precisely the context the page needs, in the page's own vocabulary, with the human watching — a negotiation, not a leak. A header can say `Accept-Language: ko`; only a tool call can say "three minutes, knows MCP, wants to build something".
-2. **Better than the UI alone.** The Handshake panel exists for people without agents, but nobody wants to click through five facets on every article. The agent already knows them. And the two-way loop — the page reports reading friction, the agent asks the reader and swaps in a plainer block — has no equivalent in a static UI.
-3. **Newly possible.** Content that adapts *without* tracking *and* without hallucination: the page owns the variants, the agent owns the context, the human owns the decision. Interactives become tools an agent can operate mid-conversation. Publishers get demand signals without surveillance.
-4. **Implementation.** Tool surfaces follow the page: the home surface (`list_articles`, `declare_reader_context`, `open_article`, `get_reader_context`, `forget_me`) and the article surface (22 tools) are swapped with `AbortSignal`s; the article surface name encodes the edition (`article:webmcp:expert:ko`) so re-registrations are precise. Reads are `readOnlyHint`; nothing on this site returns untrusted third-party content. Schemas are loose (enums, ints), validation is strict in code with self-correcting errors, and every mutating result carries a `next_step`.
+1. **Fit.** The reader arrives with context in their agent. Attune keeps the declared copy in this browser, not in a server-side reader profile. WebMCP lets that agent hand a page precisely the context the page needs, in the page's own vocabulary, with the human watching — a negotiation, not a leak. A header can say `Accept-Language: ko`; only a tool call can say "three minutes, knows MCP, wants to build something".
+2. **Better than the UI alone.** The Handshake panel exists for people without agents, but nobody wants to click through five facets on every article. The agent may already know them. WebMCP lets it inspect a page-local friction signal and invoke the same simplify action while the reader stays on the article.
+3. **Newly possible.** The reader-facing edition is composed from author-written or author-approved blocks instead of generating copy on demand; declared context stays browser-local; the human can see and erase it. Interactives become tools an agent can operate mid-conversation. Publishers get identifier-free aggregate demand signals.
+4. **Implementation.** Tool surfaces follow the page: the home surface (`list_articles`, `declare_reader_context`, `open_article`, `get_reader_context`, `forget_me`) and the article surface (22 tools) are swapped with `AbortSignal`s; the article surface name encodes the edition (`article:webmcp:expert:ko`) so re-registrations are precise. Reads are `readOnlyHint`; repository article reads return author content while Studio proposals remain pending drafts until human approval. Schemas are loose (enums, ints), validation is strict in code with self-correcting errors, and key workflow results include a `next_step` hint.
 
 ## Tool surface
 
@@ -146,7 +146,7 @@ The e2e suite (`e2e/attune.spec.ts`) also declares needs (low vision, dark room,
 
 ## What's next
 
-- An authoring UI and an exporter so any static site can ship Attune-style blocks.
+- CMS and static-site integrations that can ship Attune-style blocks from the existing studio and export format.
 - Reader-side "known concepts" that carry across publications (with consent).
 - More interactives per article, and audio editions with the same composer.
 

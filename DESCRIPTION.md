@@ -9,7 +9,7 @@
 Every reader who opens an article with an AI beside them faces the same two bad options: let the site track them into a "personalized" experience, or let the AI scrape and summarize — losing the figures, the interactives, the author's voice, and sometimes the facts. WebMCP suggested a third way. The reader's agent already knows how much time the person has, what they know, and what they're trying to do. What if the page could simply ask?
 
 ## The first 15 seconds
-Sixty-eight, low vision, in bed at night on a phone: “Does a 1% fee matter over 40 years?” Her agent already knows all of that. Two tool calls later the compound-interest article is a 2.9-minute edition (from 8.2 minutes / 28 blocks to 12 blocks, skipping what she knows), dark, extra-large, hyperlegible, big controls — and the calculator on the page shows the answer: 500 a month for 40 years at 7% loses about a fifth of the final value to a 1% fee. Nothing was generated; the page picked from what its author and designers prepared, and says why.
+Sixty-eight, low vision, reading Korean in bed at night on a phone: “Does a 1% fee matter over 40 years?” Her agent already knows all of that. A few WebMCP calls later the compound-interest article is a 2.9-minute edition (from 7.8 minutes / 28 blocks to 12 blocks, skipping what she knows), dark, extra-large, hyperlegible, big controls — and the calculator on the page shows the answer: 500 a month for 40 years at 7% loses about a quarter of the final value to a 1% fee. The reader-facing edition uses only approved blocks and display presets; the page says why it chose each one.
 
 ## What it does
 Attune is a small publication (three articles, three levels, English and Korean, each with an interactive) built on a pattern any site could adopt. A visitor's agent declares what it already knows about the person — level, language, time budget, goal, concepts already known, and how they read best: vision, hands, attention, device, lighting — through WebMCP tools, on arrival, before the person asks. The page composes an **edition**: author-written blocks filtered by level, prerequisites pulled in, known material skipped, lower-priority blocks trimmed to the time budget. Every decision has a visible reason, and the Handshake panel shows exactly what the page was told, by whom, and when — editable and erasable by the reader.
@@ -19,13 +19,13 @@ The page also designs the screen for that person. From declared needs it picks a
 The page stays alive: the agent can read exactly what the reader sees (`read_section`), operate the calculator or simulation on the page (`set_interactive`), ask the author's written FAQ (`ask_author`, which never invents), expand a section with the author's deeper material, and — when the page notices the reader re-reading a paragraph — swap in the author's plainer version of that exact block (`get_reading_friction` → `simplify_block`). Server-side, the only thing stored is an anonymous count of which edition shapes readers asked for, shown to the author on a "what readers asked for" page.
 
 ## Why WebMCP fits the use case
-The reader's context lives in their agent, not in a cookie. WebMCP lets the agent hand the page precisely what the page needs, in the page's vocabulary, with the human watching — a negotiation instead of a leak. An HTTP header can say "Korean"; only a tool call can say "three minutes, knows MCP, wants to build something".
+The reader arrives with context in their agent. Attune keeps the declared copy in this browser, not in a server-side reader profile. WebMCP lets the agent hand the page precisely what the page needs, in the page's vocabulary, with the human watching — a negotiation instead of a leak. An HTTP header can say "Korean"; only a tool call can say "three minutes, knows MCP, wants to build something".
 
 ## How it improves the experience
-The Handshake panel works by hand for people without agents, but nobody wants to click through five facets per article — the agent already knows them. The two-way loop (page reports friction → agent asks → author's plainer block appears in place) has no static-UI equivalent. And interactives become things you can talk to: "what if I put in 500 a month for 40 years?" changes the chart on the page.
+The Handshake panel works by hand for people without agents, but nobody wants to click through five facets per article — the agent may already know them. WebMCP lets it inspect a page-local friction signal and invoke the same simplify action while the reader stays on the article. And interactives become things you can talk to: "what if I put in 500 a month for 40 years?" changes the chart on the page.
 
 ## What it makes newly possible
-Content that adapts without tracking and without hallucination: the page owns the variants, the agent owns the context, the human owns the decision. Publishers learn what readers want, in aggregate, without surveillance.
+The reader-facing edition is composed from author-written or author-approved blocks instead of generating copy on demand; declared context stays browser-local; the human can see and erase it. The page owns the variants, the agent brings the context, and the human owns the decision. Publishers learn what edition shapes readers request through identifier-free aggregate counts.
 
 ## Both sides of the page
 Writing every idea at three levels in two languages is the cost that kept "editions" theoretical. So the **author studio** (`/studio/<slug>`) is agent-native too: the author's agent reads where the article is thin (`get_article_coverage`), drafts level variants, plainer rewrites and FAQ entries as tool calls (`propose_level_variant`, `propose_plainer_version`, `propose_faq`), and the author approves each one with a click — there is no approve tool. Approved blocks join the article and the export; readers' agents compose only from what was approved. The reader side never generates; the author side generates only into a human's approval queue.
@@ -34,12 +34,12 @@ Writing every idea at three levels in two languages is the cost that kept "editi
 Press **▶ Watch a 60-second demo** on the home page, or open `/a/compound-interest?judge=1`: a scripted demo drives the same registered tools with captions. The Handshake panel does everything by hand; the Agent console shows every call, the agent's and yours.
 
 ## How we built it
-- **WebMCP**: `document.modelContext.registerTool()` with `AbortSignal` surfaces (home: 8 tools; article: 22; studio: 8), a needs → design resolver the page owns, surface names that encode the edition (`article:webmcp:expert:ko`), `readOnlyHint` on reads, loose schemas with strict validation and self-correcting errors, `next_step` in every result.
+- **WebMCP**: `document.modelContext.registerTool()` with `AbortSignal` surfaces (home: 8 tools; article: 22; studio: 8), a needs → design resolver the page owns, surface names that encode the edition (`article:webmcp:expert:ko`), `readOnlyHint` on reads, loose schemas with strict validation and self-correcting errors, and `next_step` hints on key workflow results.
 - **Composer**: a deterministic, explainable edition composer (`src/shared/content.ts`) with unit tests; a validation script that prints edition sizes for every level/language/time budget.
-- **Content**: three original articles (WebMCP, compound interest, GPS) — ~40 blocks each, three levels, two languages, author FAQs, inline SVG figures, an interactive per article with a declared parameter schema.
+- **Content**: three original articles (WebMCP, compound interest, GPS) — 30–41 blocks each, three levels, two languages, author FAQs, inline SVG figures, an interactive per article with a declared parameter schema.
 - **Frontend**: React 19 + TypeScript + Vite; Handshake panel; friction tracker (IntersectionObserver, local only); Agent console showing live tools and every call.
 - **Backend**: Cloudflare Workers + a Durable Object per article holding identifier-free counters.
-- **Tests**: Vitest for the composer and the needs → design resolver (16); Playwright e2e (6) that installs a faithful `document.modelContext` stand-in and drives every tool like an agent — the friction → simplify loop, the needs handshake, judge mode, a 390-px phone, and the studio's propose → approve → reader loop — against local and production.
+- **Tests**: Vitest for the composer and the needs → design resolver (17); Playwright e2e (6) that installs a faithful `document.modelContext` stand-in and drives every tool like an agent — the friction → simplify loop, the needs handshake, judge mode, a 390-px phone, and the studio's propose → approve → reader loop — against local and production.
 
 ## Challenges
 Designing a content model that is expressive enough for real articles yet deterministic; writing the same idea honestly at three levels; keeping tool results small but sufficient; making friction detection useful without being creepy (local only, visible, switchable).
@@ -51,4 +51,4 @@ A working answer to "what does a web page look like when the reader brings an ag
 The best thing an agent can give a page is not a click — it is context. And the best thing a page can give an agent is not raw text — it is structure with reasons.
 
 ## What's next
-An authoring UI and static-site exporter; known-concepts that travel with the reader (with consent); audio editions from the same composer.
+CMS and static-site integrations for the existing studio/export format; known-concepts that travel with the reader (with consent); audio editions from the same composer.

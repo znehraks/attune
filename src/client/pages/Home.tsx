@@ -56,8 +56,8 @@ export function Home() {
           <h1 className="serif">{t('Pages that ', '')}<em>{t('negotiate', '추적')}</em>{t(' with your agent,', ' 대신 ')}<br />{t('not track you.', '')}<em>{t('', '협상')}</em>{t('', '하는 페이지.')}</h1>
           <p className="lede">
             {t(
-              'Sixty-eight, low vision, in bed at night on a phone: “Does a 1% fee matter over 40 years?” Her agent already knows all of that. It tells the page — and the page composes a three-minute, extra-large, dark edition from the author’s own blocks, runs the calculator, and explains every choice. No cookies, no profile, nothing generated.',
-              '68세, 저시력, 밤에 침대에서 폰으로. “수수료 1%가 40년이면 얼마나 차이 나?” 에이전트는 이걸 이미 압니다. 페이지에 말하면, 페이지가 저자의 블록만으로 3분짜리 큰 글씨 다크 판을 구성하고 계산기를 돌리고 모든 선택의 이유를 보여줍니다. 쿠키도 프로필도 생성도 없습니다.',
+              'Sixty-eight, low vision, in bed at night on a phone: “Does a 1% fee matter over 40 years?” Her agent already knows all of that. It tells the page — and the page composes a three-minute, extra-large, dark edition from approved blocks, runs the calculator, and explains every choice. No cookie or server-side reader profile.',
+              '68세, 저시력, 밤에 침대에서 폰으로. “수수료 1%가 40년이면 얼마나 차이 나?” 에이전트는 이걸 이미 압니다. 페이지에 말하면, 페이지가 승인된 블록으로 3분짜리 큰 글씨 다크 판을 구성하고 계산기를 돌리고 모든 선택의 이유를 보여줍니다. 쿠키나 서버 독자 프로필은 없습니다.',
             )}
           </p>
           <p className="muted" style={{ margin: '-10px 0 20px', fontSize: 14 }}>

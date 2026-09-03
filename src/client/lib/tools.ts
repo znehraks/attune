@@ -257,7 +257,7 @@ export function buildSurface(env: ToolEnv): { name: string; specs: ToolSpec[] } 
     name: 'declare_reader_context',
     title: 'Tell the page about the reader',
     description:
-      'Tell this publication what the person you represent needs — level, language, time budget, goal, and concepts they already know or do not know — so pages compose an edition for them from the author’s own blocks. Nothing else about the person is shared or stored. Call again any time the need changes; the page re-composes immediately and shows the declaration to the reader.',
+      'Tell this publication what the person you represent needs — level, language, time budget, goal, and concepts they already know or do not know — so pages compose an edition from approved blocks. Only the fields supplied here are shared; they stay in this browser until forget_me. Call again any time the need changes; the page re-composes and shows the declaration to the reader.',
     inputSchema: contextSchema,
     execute: async (input) => {
       const partial = contextFromInput(input);

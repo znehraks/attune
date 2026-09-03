@@ -43,7 +43,7 @@ export function runDemo(reg: ToolRegistry, hooks: Hooks, where: 'home' | 'articl
     if (where === 'home') {
       await step(t('A judge without an agent? Watch the same tools an agent would call.', '에이전트가 없어도 됩니다. 에이전트가 부를 툴을 그대로 실행합니다.'), 2200);
       await step(t('The agent declares: expert, 3 minutes, already knows compounding.', '에이전트가 선언: 전문가, 3분, 복리는 이미 앎.'), 800);
-      await call('declare_reader_context', { level: 'expert', time_minutes: 3, knows: ['compounding'], note: t('you asked for the 3-minute expert version', '3분짜리 전문가 판을 요청하셨습니다') });
+      await call('declare_reader_context', { level: 'expert', time_minutes: 3, goal: 'decide', knows: ['compounding'], note: t('you asked for the 3-minute decision edition', '3분짜리 결정용 전문가 판을 요청하셨습니다') });
       await sleep(1600, signal);
       await step(t('It opens the article. The page composes a 3-minute expert edition from the author’s blocks.', '기사를 엽니다. 페이지가 저자의 블록으로 3분짜리 전문가 판을 구성합니다.'), 600);
       await call('open_article', { slug: 'compound-interest' });
@@ -51,7 +51,7 @@ export function runDemo(reg: ToolRegistry, hooks: Hooks, where: 'home' | 'articl
     } else {
       await step(t('Watch the tools an agent would call, one by one.', '에이전트가 부를 툴을 하나씩 실행합니다.'), 1800);
       await step(t('Declare: expert, 3 minutes, already knows compounding. The page recomposes.', '선언: 전문가, 3분, 복리는 이미 앎. 페이지가 다시 구성됩니다.'), 600);
-      await call('declare_reader_context', { level: 'expert', time_minutes: 3, knows: ['compounding'], note: t('you asked for the 3-minute expert version', '3분짜리 전문가 판을 요청하셨습니다') });
+      await call('declare_reader_context', { level: 'expert', time_minutes: 3, goal: 'decide', knows: ['compounding'], note: t('you asked for the 3-minute decision edition', '3분짜리 결정용 전문가 판을 요청하셨습니다') });
       await sleep(2800, signal);
     }
     const ed = (await call('get_edition')) as { edition: { minutes: number; full_minutes: number }; outline: { section_id: string; blocks: number }[] };

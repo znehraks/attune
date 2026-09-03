@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { composeEdition, findFaq, outline, simplerVersion, deeperBlocks, validateArticle, type Article } from '../src/shared/content';
+import { article as compoundInterestArticle } from '../src/client/content/compound-interest';
 
 const t = (en: string) => ({ en, ko: en + ' (ko)' });
 const words = (n: number) => Array.from({ length: n }, (_, i) => `w${i}`).join(' ');
@@ -71,6 +72,18 @@ describe('composer', () => {
     const understand = composeEdition(article, { level: 'intermediate', goal: 'understand', timeMinutes: 3 });
     expect(build.blocks.map((b) => b.id)).toContain('build-step');
     expect(understand.blocks.map((b) => b.id)).not.toContain('build-step');
+  });
+  it('keeps the calculator in the three-minute compound-interest decision edition', () => {
+    const ed = composeEdition(compoundInterestArticle, {
+      level: 'expert',
+      language: 'ko',
+      timeMinutes: 3,
+      goal: 'decide',
+      knows: ['principal', 'interest-rate', 'compounding'],
+      unknown: ['fee-drag'],
+    });
+    expect(ed.minutes).toBeLessThanOrEqual(3);
+    expect(ed.blocks.map((b) => b.id)).toContain('interactive-calc');
   });
   it('finds simpler versions and deeper blocks', () => {
     expect(simplerVersion(article, 'dense')?.id).toBe('dense-plain');

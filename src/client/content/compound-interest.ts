@@ -233,7 +233,7 @@ export const article: Article = {
     // ---------------- Try it ----------------
     { id: 'h-try', kind: 'heading', levels: ['novice', 'intermediate', 'expert'], priority: 3, text: { en: 'Try it with your own numbers', ko: '당신의 숫자로 직접 해 보기' } },
     {
-      id: 'interactive-calc', kind: 'interactive', levels: ['novice', 'intermediate', 'expert'], priority: 3, section: 'h-try', interactive: 'compound-calculator',
+      id: 'interactive-calc', kind: 'interactive', levels: ['novice', 'intermediate', 'expert'], priority: 2, section: 'h-try', goals: ['decide'], interactive: 'compound-calculator',
       text: {
         en: 'Change the starting amount, the monthly contribution, the rate, the years, or the fee, and watch the curve. If you are reading with an agent, ask it to run scenarios for you: “what if I start five years later?”, “what does a 1% fee cost me?”. It can set these numbers directly.',
         ko: '시작 금액, 월 납입액, 수익률, 기간, 수수료를 바꾸며 곡선을 보세요. 에이전트와 함께 읽고 있다면 시나리오를 대신 돌려 달라고 하세요. “5년 늦게 시작하면?”, “1% 수수료는 얼마를 가져가나?”. 에이전트가 이 숫자들을 직접 바꿀 수 있습니다.',

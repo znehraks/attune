@@ -19,9 +19,9 @@ test('an agent negotiates an edition, reads it, simplifies where the reader is s
   const slug = list.articles[0].slug as string;
 
   // Declare context on the home page, then open the article: it must be composed for that context.
-  const d = await call(page, 'declare_reader_context', { level: 'expert', language: 'en', time_minutes: 3, goal: 'understand', note: 'you asked for the 3-minute expert version' });
+  const d = await call(page, 'declare_reader_context', { level: 'expert', language: 'en', time_minutes: 3, goal: 'decide', note: 'you asked for the 3-minute decision edition' });
   expect(d.ok).toBe(true);
-  await expect(page.locator('.note-box')).toContainText('you asked for the 3-minute expert version');
+  await expect(page.locator('.note-box')).toContainText('you asked for the 3-minute decision edition');
   const opened = await call(page, 'open_article', { slug });
   expect(opened.ok).toBe(true);
   await expect(page).toHaveURL(new RegExp(`/a/${slug}$`));
@@ -31,6 +31,8 @@ test('an agent negotiates an edition, reads it, simplifies where the reader is s
   expect(ed.edition.minutes).toBeLessThanOrEqual(3.6);
   expect(ed.edition.minutes).toBeLessThan(ed.edition.full_minutes);
   expect(ed.excluded_count).toBeGreaterThan(0);
+  expect(ed.interactives).toContain('compound-calculator');
+  await expect(page.locator('.interactive-wrap')).toBeVisible();
   await expect(page.getByText(/expert edition/i)).toBeVisible();
 
   // Read exactly what the reader sees.
