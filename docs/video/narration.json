@@ -52,7 +52,7 @@
  {
   "id": "10-how",
   "caption": "Tool surfaces follow the page. The page owns the variants; the agent owns the context; the human owns the decision.",
-  "text": "Under the hood: three tool surfaces swapped with abort signals, thirty-eight tools across reader, home and studio, read-only hints on reads, descriptions under five hundred characters, a needs-to-design resolver the page owns, three original articles at three levels in two languages, sixteen unit tests, and six end-to-end tests that drive every tool like an agent, including the studio's propose, approve, read loop. And a judge mode: one click runs the whole negotiation without an agent."
+  "text": "Under the hood: three tool surfaces swapped with abort signals, thirty-eight tools across reader, home and studio, read-only hints on reads, a needs-to-design resolver the page owns, three original articles at three levels in two languages, sixteen unit tests, six end-to-end tests that drive every tool like an agent, and a judge mode that runs the whole negotiation with one click."
  },
  {
   "id": "11-end",

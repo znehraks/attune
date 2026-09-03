@@ -106,9 +106,8 @@ await until('055-studio', st, 300);
 
 // S6 levels — Korean novice full edition on the WebMCP article
 st = Date.now(); mark('06-levels');
-await cap(A, S['06-levels'].caption, SUB);
-await agent(A, 'open_article', { slug: 'webmcp' });
-await A.waitForURL(/\/a\/webmcp/);
+await A.goto(base + '/a/webmcp');
+await A.waitForSelector('text=WebMCP detected');
 await cap(A, S['06-levels'].caption, SUB);
 await sleep(1200);
 await agent(A, 'declare_reader_context', { level: 'novice', language: 'ko', time_minutes: 0 });
