@@ -20,4 +20,5 @@ No login or credentials needed. No agent? Press "▶ Watch a 60-second demo" on 
 4. Say: "Where did I get stuck?" after re-reading a paragraph, then "make it simpler" — the block is swapped for the author's plainer version.
 5. On the compound-interest article: "What if I put in 500 a month for 40 years with a 1% fee?" — the calculator on the page updates.
 6. "Did the author say anything about iframes?" — the author's own answer, or "not covered". "Forget me" erases everything.
-7. Chrome alternative: chrome://flags/#enable-webmcp-testing + Model Context Tool Inspector. No agent: use the Handshake panel and the Agent console on any page.
+7. Author side: open https://attune.znehraks.workers.dev/studio/compound-interest and say "Read the coverage and draft plainer versions for the three densest blocks" — drafts arrive as pending cards; approve one by click; the reader view's simplify_block now uses it.
+8. Chrome alternative: chrome://flags/#enable-webmcp-testing + Model Context Tool Inspector. No agent: use the Handshake panel and the Agent console on any page.

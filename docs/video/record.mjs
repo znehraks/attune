@@ -80,6 +80,30 @@ await A.mouse.wheel(0, 500); await sleep(6000);
 await A.mouse.wheel(0, 500); await sleep(5000);
 await until('05-why', st, 300);
 
+// S5.5 studio — the author's agent drafts; the author approves by click
+st = Date.now(); mark('055-studio');
+await A.goto(base + '/studio/compound-interest');
+await A.waitForSelector('text=WebMCP detected');
+await A.evaluate(() => localStorage.removeItem('attune:studio:compound-interest'));
+await A.reload();
+await A.waitForSelector('text=WebMCP detected');
+await cap(A, S['055-studio'].caption, SUB);
+await sleep(2500);
+const cov = await agent(A, 'get_article_coverage');
+const tgt = cov.blocks_without_plainer_version[0];
+await agent(A, 'propose_plainer_version', { block_id: tgt, text_en: 'This is the same idea in everyday words: money that earns money keeps earning on what it earned, so it grows faster every year. Leave it alone and the curve bends upward on its own.', text_ko: '같은 내용을 쉬운 말로: 돈이 번 돈이 다시 돈을 벌기 때문에 해마다 더 빨리 불어납니다. 가만히 두면 곡선이 저절로 위로 휩니다.', rationale: 'dense paragraph; readers re-read it' });
+await sleep(1500);
+const one = cov.blocks_written_for_one_level_only.find((b) => b.level === 'expert');
+if (one) await agent(A, 'propose_level_variant', { block_id: one.block_id, level: 'novice', text_en: 'Here is the beginner version of that idea, with a small example instead of the formula: put in 100, earn 7, and next year you earn on 107.', text_ko: '입문자용으로, 공식 대신 작은 예시로: 100을 넣고 7을 벌면 다음 해에는 107에 대해 법니다.', rationale: 'section has no novice block' });
+await sleep(1500);
+await A.evaluate(() => document.querySelector('.proposal')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+await sleep(3000);
+const approve = A.getByRole('button', { name: /Approve — publish this block/ }).first();
+await approve.hover(); await sleep(600);
+await approve.click();
+await sleep(2500);
+await until('055-studio', st, 300);
+
 // S6 levels — Korean novice full edition on the WebMCP article
 st = Date.now(); mark('06-levels');
 await cap(A, S['06-levels'].caption, SUB);

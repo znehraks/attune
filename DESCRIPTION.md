@@ -27,16 +27,19 @@ The Handshake panel works by hand for people without agents, but nobody wants to
 ## What it makes newly possible
 Content that adapts without tracking and without hallucination: the page owns the variants, the agent owns the context, the human owns the decision. Publishers learn what readers want, in aggregate, without surveillance.
 
+## Both sides of the page
+Writing every idea at three levels in two languages is the cost that kept "editions" theoretical. So the **author studio** (`/studio/<slug>`) is agent-native too: the author's agent reads where the article is thin (`get_article_coverage`), drafts level variants, plainer rewrites and FAQ entries as tool calls (`propose_level_variant`, `propose_plainer_version`, `propose_faq`), and the author approves each one with a click — there is no approve tool. Approved blocks join the article and the export; readers' agents compose only from what was approved. The reader side never generates; the author side generates only into a human's approval queue.
+
 ## For judges without an agent
 Press **▶ Watch a 60-second demo** on the home page, or open `/a/compound-interest?judge=1`: a scripted demo drives the same registered tools with captions. The Handshake panel does everything by hand; the Agent console shows every call, the agent's and yours.
 
 ## How we built it
-- **WebMCP**: `document.modelContext.registerTool()` with `AbortSignal` surfaces (home: 8 tools; article: 22), a needs → design resolver the page owns, surface names that encode the edition (`article:webmcp:expert:ko`), `readOnlyHint` on reads, loose schemas with strict validation and self-correcting errors, `next_step` in every result.
+- **WebMCP**: `document.modelContext.registerTool()` with `AbortSignal` surfaces (home: 8 tools; article: 22; studio: 8), a needs → design resolver the page owns, surface names that encode the edition (`article:webmcp:expert:ko`), `readOnlyHint` on reads, loose schemas with strict validation and self-correcting errors, `next_step` in every result.
 - **Composer**: a deterministic, explainable edition composer (`src/shared/content.ts`) with unit tests; a validation script that prints edition sizes for every level/language/time budget.
 - **Content**: three original articles (WebMCP, compound interest, GPS) — ~40 blocks each, three levels, two languages, author FAQs, inline SVG figures, an interactive per article with a declared parameter schema.
 - **Frontend**: React 19 + TypeScript + Vite; Handshake panel; friction tracker (IntersectionObserver, local only); Agent console showing live tools and every call.
 - **Backend**: Cloudflare Workers + a Durable Object per article holding identifier-free counters.
-- **Tests**: Vitest for the composer and the needs → design resolver (16); Playwright e2e (5) that installs a faithful `document.modelContext` stand-in and drives every tool like an agent — the friction → simplify loop, the needs handshake, judge mode, and a 390-px phone — against local and production.
+- **Tests**: Vitest for the composer and the needs → design resolver (16); Playwright e2e (6) that installs a faithful `document.modelContext` stand-in and drives every tool like an agent — the friction → simplify loop, the needs handshake, judge mode, a 390-px phone, and the studio's propose → approve → reader loop — against local and production.
 
 ## Challenges
 Designing a content model that is expressive enough for real articles yet deterministic; writing the same idea honestly at three levels; keeping tool results small but sufficient; making friction detection useful without being creepy (local only, visible, switchable).

@@ -23,10 +23,11 @@ code{font-family:'JetBrains Mono',monospace;font-size:.85em;background:#2a2a33;p
   <div class="logo"><span class="l"><i></i><i></i><i></i></span>Attune · under the hood</div>
   <h1 style="font-size:56px">The page owns the variants.<br>The agent owns the context.<br>The human owns the decision.</h1>
   <ul>
-    <li>two tool surfaces swapped with <code>AbortSignal</code> · 22 tools on an article · <code>readOnlyHint</code> on reads</li>
+    <li>two tool surfaces swapped with <code>AbortSignal</code> · 38 tools across reader, home and studio · <code>readOnlyHint</code> on reads</li>
     <li>needs → design resolver the page owns: themes, type scale, fonts, layouts, targets, motion, spotlight, color-safe</li>
+    <li>author studio: the author’s agent proposes, the author approves by click, readers compose from approved blocks</li>
     <li>loose schemas, strict validation, self-correcting errors, <code>next_step</code> in every result</li>
-    <li>deterministic composer with unit tests · 3 original articles × 3 levels × 2 languages</li>
+    <li>deterministic composer · 16 unit + 6 e2e tests · 3 original articles × 3 levels × 2 languages</li>
     <li>friction measured locally, shown on the page, shared only when the reader’s agent asks</li>
     <li>server stores identifier-free counts only · Cloudflare Workers + Durable Objects</li>
   </ul>

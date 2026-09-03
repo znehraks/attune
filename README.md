@@ -12,6 +12,12 @@ It is a small publication (three articles, three levels, two languages) and, mor
 |---|---|---|
 | ![](docs/shots/article-default.png) | ![](docs/shots/article-expert-3min-top.png) | ![](docs/shots/article-lowvision-dark.png) |
 
+**Both sides of the page are agent-native.** In the [author studio](https://attune.znehraks.workers.dev/studio/compound-interest) the *author's* agent reads where the article is thin and drafts level variants, plainer rewrites and FAQ entries as tool calls; the author approves each with a click; readers' agents then compose only from what was approved. Writing every idea at three levels in two languages was the cost that kept this pattern theoretical — this is what removes it.
+
+| Studio: drafts arrive as tool calls | The author approves by click |
+|---|---|
+| ![](docs/shots/studio-pending.png) | ![](docs/shots/studio-approved.png) |
+
 **No agent at hand?** Press **▶ Watch a 60-second demo** on the home page, or open any article with `?judge=1` (e.g. `/a/compound-interest?judge=1`): a scripted demo calls the very same registered tools, with captions, so you see the negotiation without a WebMCP browser.
 
 Tests: 16 unit (edition composer, needs → design) · 5 Playwright e2e that drive every tool through a `document.modelContext` stand-in, on desktop and on a 390-px phone, against both local and production.
@@ -30,6 +36,9 @@ Tests: 16 unit (edition composer, needs → design) · 5 Playwright e2e that dri
 
 ### With Chrome 149+
 Enable `chrome://flags/#enable-webmcp-testing`, install the [Model Context Tool Inspector](https://chromewebstore.google.com/detail/webmcp-model-context-tool/gbpdfapgefenggkahomfgkhfehlcenpd), open the site and call the tools yourself.
+
+### As an author
+Open https://attune.znehraks.workers.dev/studio/compound-interest in the ChatGPT browser and say: *"Read the coverage and draft plainer versions for the three densest blocks, in both languages."* Drafts appear as pending cards with the source beside them; approve one and open the reader view — `simplify_block` now uses it.
 
 ### With no agent
 Press **▶ Watch a 60-second demo** on the home page (or add `?judge=1` to any article URL). The **Handshake** panel on every page does the same thing by hand (level, language, time, goal, known concepts, how you read best, display), the **Agent console** lists the live tools, shows every call — the agent's and yours — and lets you run any tool with its parameter schema, and every dense paragraph has a *plainer?* button with an *original* undo.
@@ -63,10 +72,12 @@ Attune tries a third way, which only became possible with WebMCP:
 | Where | Tools |
 |---|---|
 | Home | `list_articles` · `declare_reader_context` · `declare_reader_needs` · `set_display` · `get_display` · `open_article` · `get_reader_context` · `forget_me` |
+| Author studio (`/studio/<slug>`) | `get_article_coverage` · `get_block_source` · `propose_level_variant` · `propose_plainer_version` · `propose_faq` · `list_proposals` · `withdraw_proposal` · `export_article` — approving is a button, never a tool |
 | Article | `get_edition` · `declare_reader_context` · `declare_reader_needs` · `set_display` · `get_display` · `focus_section` · `read_section` · `read_block` · `get_reading_friction` · `simplify_block` · `expand_section` · `ask_author` · `get_glossary` · `mark_known` · `set_interactive` · `get_interactive` · `save_place` · `resume_place` · `list_articles` · `open_article` · `get_reader_context` · `forget_me` |
 
 Design notes that matter for agents:
 
+- The studio surface is the mirror image of the reader surface: the agent can *propose* (write tools that land as pending drafts with a source-vs-draft view) but never *publish*; approval is a human click, recorded in the same console timeline as the agent's calls. Approved blocks are merged into the article at runtime (`applyOverlay`) and exported as the same JSON content model.
 - `declare_reader_needs` is written to be called **on arrival, before the person asks**, from the agent's own memory (vision, motor, reading, device, lighting). The page maps needs to a design with reasons (`src/shared/needs.ts`); `set_display` records explicit preferences that win over the inference; `focus_section` lights one section and dims the rest.
 - Tool hygiene: descriptions under 500 characters (the Chrome security guide's recommendation), `read_section` returns a map (block ids + first sentences) and `read_block` the full text, so a typical result stays small; overlapping tools state their roles.
 - `get_edition` is the one-call briefing: level, language, minutes vs. full minutes, outline with section ids and minutes, which blocks were left out and why, concept gaps, available interactives, current reading friction, and a `next_step`.
