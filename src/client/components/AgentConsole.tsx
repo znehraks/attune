@@ -30,7 +30,7 @@ export function AgentConsole({ registry, demo, compact }: Props) {
     const schema = (selected?.inputSchema ?? {}) as { properties?: Record<string, { type?: string; enum?: unknown[]; items?: { properties?: Record<string, { type?: string }> } }>; required?: string[] };
     const out: Record<string, unknown> = {};
     for (const [k, p] of Object.entries(schema.properties ?? {})) {
-      if (!schema.required?.includes(k)) continue;
+      if (!schema.required?.includes(k) && !p.enum) continue;
       if (p.enum) out[k] = p.enum[0];
       else if (p.type === 'integer' || p.type === 'number') out[k] = 30;
       else if (p.type === 'array') out[k] = [Object.fromEntries(Object.keys(p.items?.properties ?? {}).map((kk) => [kk, kk === 'date' ? '2026-01-01' : kk === 'from' ? '09:00' : kk === 'to' ? '12:00' : '']))];
@@ -53,8 +53,15 @@ export function AgentConsole({ registry, demo, compact }: Props) {
       setErr(`Invalid JSON: ${(e as Error).message}`);
       return;
     }
+    const props = ((selected.inputSchema as { properties?: Record<string, unknown> }).properties ?? {}) as Record<string, unknown>;
+    const unknown = Object.keys(input).filter((k) => !(k in props));
+    if (unknown.length) {
+      setErr(`Unknown key${unknown.length > 1 ? 's' : ''}: ${unknown.join(', ')}. This tool accepts: ${Object.keys(props).join(', ') || '(no parameters)'}.`);
+      return;
+    }
     await registry.run(selected.name, input, 'console');
   };
+  const schemaText = useMemo(() => JSON.stringify(selected?.inputSchema ?? {}, null, 1), [selected]);
 
   const log = [...registry.log].reverse();
   return (
@@ -123,7 +130,12 @@ export function AgentConsole({ registry, demo, compact }: Props) {
                 </option>
               ))}
             </select>
+            <div className="muted small" style={{ color: '#a9a7a0' }}>{selected?.description}</div>
             <textarea rows={4} value={args} onChange={(e) => setArgs(e.target.value)} aria-label="Arguments (JSON)" />
+            <details>
+              <summary>Parameter schema</summary>
+              <pre style={{ whiteSpace: 'pre-wrap', fontSize: 11, color: '#cfcdc5', maxHeight: 220, overflow: 'auto' }}>{schemaText}</pre>
+            </details>
             {err && <div className="err mono">{err}</div>}
             <div className="row">
               <button className="btn sm" onClick={run} disabled={!selected}>
@@ -137,8 +149,8 @@ export function AgentConsole({ registry, demo, compact }: Props) {
           {log.slice(0, 30).map((l: ToolCallLog) => (
             <div className={`l ${l.source}`} key={l.id}>
               <div className="h">
-                <b>{l.name}</b> · {l.source} · {new Date(l.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                {l.ms !== undefined ? ` · ${l.ms}ms` : ' · running…'}
+                <b>{l.name}</b> · {l.source === 'hand' ? '✋ by hand' : l.source} · {new Date(l.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                {l.source === 'hand' ? '' : l.ms !== undefined ? ` · ${l.ms}ms` : ' · running…'}
               </div>
               {!!l.input && Object.keys(l.input as object).length > 0 && <pre>{'← ' + fmt(l.input)}</pre>}
               {l.error ? <pre className="err">{'✕ ' + l.error}</pre> : l.output !== undefined ? <pre>{'→ ' + fmt(l.output)}</pre> : null}

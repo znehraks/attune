@@ -22,7 +22,7 @@ export interface ToolCallLog {
   output?: unknown;
   error?: string;
   ms?: number;
-  source: 'agent' | 'console' | 'demo';
+  source: 'agent' | 'console' | 'demo' | 'hand';
 }
 
 type Listener = () => void;
@@ -97,6 +97,13 @@ export class ToolRegistry {
         }
       }
     }
+    this.emit();
+  }
+
+  /** Record something the human did by hand, so agent and human actions share one timeline. */
+  record(name: string, input: unknown, output?: unknown): void {
+    const entry: ToolCallLog = { id: Math.random().toString(36).slice(2), at: Date.now(), name, input, output, ms: 0, source: 'hand' };
+    this.log = [...this.log.slice(-99), entry];
     this.emit();
   }
 

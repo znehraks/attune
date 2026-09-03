@@ -14,6 +14,7 @@ import { AgentConsole } from '../components/AgentConsole';
 import type { Params } from '../components/Interactives';
 import { computeInteractive } from '../components/Interactives';
 import { TopBar } from './Home';
+import { demoStore } from '../lib/demo';
 
 function timeBucket(m: number): string {
   if (!m) return 'all';
@@ -49,6 +50,14 @@ export function ArticlePage({ slug }: { slug: string }) {
 
   useEffect(() => contextStore.subscribe(rerender), [rerender]);
   useEffect(() => displayStore.subscribe(rerender), [rerender]);
+  useEffect(() => {
+    if (!article || !edition) return;
+    const l = edition.context.language;
+    document.title = `${article.title[l]} — Attune`;
+    document.documentElement.lang = l;
+  }, [article, edition]);
+  const [sideOpen, setSideOpen] = useState(false);
+  useEffect(() => demoStore.subscribe(rerender), [rerender]);
 
   // Spotlight: keep the section in view (or the focused section) bright, dim the rest.
   const [inFocus, setInFocus] = useState<string | null>(null);
@@ -161,6 +170,15 @@ export function ArticlePage({ slug }: { slug: string }) {
     },
     [article, edition, extras, flash],
   );
+
+  const undoSwap = useCallback((originalId: string) => {
+    setSwaps((m) => {
+      const n = { ...m };
+      delete n[originalId];
+      return n;
+    });
+    registry.record('undo_simplify', { block_id: originalId });
+  }, []);
 
   const setInteractive = useCallback(
     (id: string, params: Params) => {
@@ -278,6 +296,16 @@ export function ArticlePage({ slug }: { slug: string }) {
     return unsub;
   }, [rerender]);
 
+  // Judge mode: /a/<slug>?judge=1 runs the scripted demo automatically.
+  useEffect(() => {
+    if (!article || !edition) return;
+    if (new URLSearchParams(location.search).get('judge') !== '1') return;
+    if (demoStore.running) return;
+    const timer = window.setTimeout(() => demoStore.start('article'), 1200);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [article?.slug]);
+
   if (!article || !edition) {
     return (
       <div className="container">
@@ -318,6 +346,14 @@ export function ArticlePage({ slug }: { slug: string }) {
               <span>{t('Your agent can shape this page. Try: “I have three minutes, I already know MCP, give me the expert version.”', '에이전트가 이 페이지를 바꿀 수 있어요. 이렇게 말해 보세요: “3분밖에 없고 MCP는 아니까 전문가 판으로.”')}</span>
             </div>
           )}
+          {edition.decisions.some((d) => !d.included && d.reason.startsWith('trimmed') && article.blocks.find((b) => b.id === d.blockId)?.kind === 'interactive') && (
+            <div className="notice">
+              <span>{t(`Trimmed to ${edition.context.timeMinutes} min: the interactive was left out.`, `${edition.context.timeMinutes}분에 맞추느라 인터랙티브를 뺐습니다.`)}</span>
+              <button className="btn xs" onClick={() => { contextStore.update({ timeMinutes: 0 }, 'hand'); recompose('hand'); }}>
+                {t('Show everything', '전체 보기')}
+              </button>
+            </div>
+          )}
           <Blocks
             article={article}
             blocks={visible}
@@ -329,17 +365,21 @@ export function ArticlePage({ slug }: { slug: string }) {
             highlight={highlight}
             interactives={interactives}
             onInteractive={(id, p) => {
-              setInteractive(id, p);
+              const out = setInteractive(id, p);
               report('interactive', 'hand');
+              registry.record('set_interactive', { id, params: p }, out);
             }}
             onSimplify={(id) => {
               const s = simplify(id);
               report('simplify', 'hand');
+              registry.record('simplify_block', { block_id: id }, s ? { replaced: id, with: s.id } : { ok: false });
               if (!s) showToast(t('No plainer version for this block', '이 블록의 쉬운 버전이 없어요'));
             }}
+            onUndoSwap={undoSwap}
             onExpand={(s) => {
-              expand(s);
+              const added = expand(s);
               report('expand', 'hand');
+              registry.record('expand_section', { section_id: s }, { added: added.map((b) => b.id) });
             }}
             canExpand={canExpand}
             showFriction={showFriction}
@@ -353,9 +393,23 @@ export function ArticlePage({ slug }: { slug: string }) {
             <span>{t('Every word above was written by the author. Editions are composed, never generated.', '위의 모든 문장은 저자가 썼습니다. 판은 조합될 뿐, 생성되지 않습니다.')}</span>
           </footer>
         </main>
-        <aside className="side">
+        <aside className={`side${sideOpen ? '' : ' mobile-collapsed'}`}>
+          <button className="side-toggle" onClick={() => setSideOpen((o) => !o)} aria-expanded={sideOpen}>
+            <span>⚙ {t('Handshake & agent console', '핸드셰이크 · 에이전트 콘솔')}</span>
+            <span className="muted">{sideOpen ? t('hide', '접기') : t('show', '펼치기')}</span>
+          </button>
           <EditionPanel article={article} edition={edition} onChange={() => recompose('hand')} onJump={(id) => scrollTo(id)} agentDetected={registry.native} />
-          <AgentConsole registry={registry} compact />
+          <AgentConsole
+            registry={registry}
+            compact
+            demo={{
+              canRun: true,
+              running: demoStore.running,
+              narration: [],
+              run: () => demoStore.start('article'),
+              stop: () => demoStore.stop(),
+            }}
+          />
         </aside>
       </div>
       {(displayStore.display.layout === 'focus' || displayStore.focusSection) && (

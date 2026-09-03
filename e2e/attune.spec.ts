@@ -107,7 +107,7 @@ test('handshake by hand: the panel recomposes the edition and the surface name f
   const e1 = await call(page, 'get_edition');
   await page.getByRole('button', { name: /^expert$/ }).click();
   await expect.poll(async () => (await call(page, 'get_edition')).edition.level).toBe('expert');
-  await page.getByRole('button', { name: '2′', exact: true }).click();
+  await page.getByRole('button', { name: '2 min', exact: true }).click();
   await expect.poll(async () => (await call(page, 'get_edition')).edition.minutes).toBeLessThan(e1.edition.full_minutes);
   await expect(page.getByText('Set by you')).toBeVisible();
 });
@@ -159,4 +159,40 @@ test('needs handshake: the agent declares how the person reads best and the page
   await call(page, 'forget_me');
   await expect(html).toHaveAttribute('data-theme', 'light');
   await expect(html).toHaveAttribute('data-text', 'normal');
+});
+
+test('judge mode: a one-click scripted demo drives the same tools, with captions, and ?judge=1 auto-starts it', async ({ page }) => {
+  await page.addInitScript(WEBMCP_SHIM);
+  await page.goto('/');
+  await page.getByRole('button', { name: /Watch a 60-second demo/ }).click();
+  await expect(page.locator('#demo-cap')).toBeVisible();
+  await expect(page).toHaveURL(/\/a\/compound-interest/, { timeout: 15000 });
+  await expect(page.locator('#demo-cap')).toContainText(/Edition:/, { timeout: 15000 });
+  await page.locator('#demo-cap').getByRole('button', { name: /stop/i }).click();
+  await expect(page.locator('#demo-cap')).toHaveCount(0);
+
+  await page.goto('/a/webmcp?judge=1');
+  await expect(page.locator('#demo-cap')).toBeVisible({ timeout: 10000 });
+  await page.locator('#demo-cap').getByRole('button', { name: /stop/i }).click();
+});
+
+test('mobile: home stacks to one column and a low-vision reader still gets a readable article', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.addInitScript(WEBMCP_SHIM);
+  await page.goto('/');
+  const hero = page.locator('.hero');
+  const cols = await hero.evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length);
+  expect(cols).toBe(1);
+  const bodyOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(bodyOverflow).toBeLessThanOrEqual(1);
+  await call(page, 'declare_reader_needs', { vision: 'low-vision' });
+  await call(page, 'open_article', { slug: 'compound-interest' });
+  await expect.poll(() => names(page), { timeout: 10000 }).toContain('get_edition');
+  const mainWidth = await page.locator('.article-grid main').evaluate((el) => el.getBoundingClientRect().width);
+  expect(mainWidth).toBeGreaterThan(300);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+  await expect(page.locator('.side-toggle')).toBeVisible();
+  await ctx.close();
 });

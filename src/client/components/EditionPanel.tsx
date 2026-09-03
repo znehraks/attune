@@ -75,7 +75,7 @@ export function EditionPanel({ article, edition, onChange, onJump, agentDetected
           </div>
           <div className="facet">
             <span>{t('Time', '시간')}</span>
-            {seg(ctx.timeMinutes, [0, 2, 5, 10] as const, (m) => set({ timeMinutes: m }), (m) => (m === 0 ? t('all', '전체') : `${m}′`))}
+            {seg(ctx.timeMinutes, [0, 2, 5, 10] as const, (m) => set({ timeMinutes: m }), (m) => (m === 0 ? t('all', '전체') : t(`${m} min`, `${m}분`)))}
           </div>
           <div className="facet">
             <span>{t('Goal', '목적')}</span>
@@ -130,9 +130,9 @@ export function EditionPanel({ article, edition, onChange, onJump, agentDetected
             {sel('device', ['unknown', 'desktop', 'phone', 'tablet'], { _label: t('Device', '기기'), unknown: t('unknown', '모름'), desktop: t('desktop', '데스크톱'), phone: t('phone', '폰'), tablet: t('tablet', '태블릿') })}
             {sel('light', ['normal', 'dark-room', 'bright-sunlight'], { _label: t('Lighting', '조명'), normal: t('normal', '보통'), 'dark-room': t('dark room', '어두운 방'), 'bright-sunlight': t('bright sunlight', '밝은 햇빛') })}
           </div>
-          {decisions.length > 0 && (
+          {decisions.filter((d) => !overridden.includes(d.setting)).length > 0 && (
             <div className="design-why">
-              {decisions.map((d) => (
+              {decisions.filter((d) => !overridden.includes(d.setting)).map((d) => (
                 <span key={`${d.setting}-${String(d.value)}`}>
                   <b>{d.setting}</b> → {String(d.value)} <span className="muted">({d.because})</span>
                 </span>

@@ -133,7 +133,7 @@ export function needsTools(bridgeRecompose?: () => void): ToolSpec[] {
     name: 'declare_reader_needs',
     title: 'Tell the page how the person reads best',
     description:
-      'Call this as soon as the person arrives, before they ask, using what you already know about them from your memory and the current situation: vision (low vision, light sensitivity, color blindness, screen reader), motor control (limited precision, keyboard only, one-handed), reading (dyslexia, easily distracted, plain language), device, and lighting. The page — not you — decides how the interface adapts: type size, contrast, theme, font, spacing, layout, target size, motion, one-section-at-a-time. Declare only what you actually know; leave the rest out. Tell the person what you declared; they can change or erase it on the page. Call again when the situation changes (they moved to a phone, the room got dark).',
+      'Call on arrival, before the person asks, with what you already know about them: vision (low vision, light sensitivity, color blindness, screen reader), motor control (limited precision, keyboard only, one-handed), reading (dyslexia, easily distracted, plain language), device and lighting. The page — not you — picks type size, contrast, theme, font, spacing, layout and target size, and shows its reasons. Declare only what you know; call again when the situation changes.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -218,7 +218,7 @@ export function needsTools(bridgeRecompose?: () => void): ToolSpec[] {
   const getDisplay: ToolSpec = {
     name: 'get_display',
     title: 'Read the current display',
-    description: 'The reader’s declared needs, the display the page derived from them (with reasons), any explicit preferences, and the focused section.',
+    description: 'Read-only: the reader’s declared needs, the display the page derived from them (with reasons), explicit preferences that override it, and the focused section. declare_reader_needs = what you know about the person; set_display = what they explicitly asked for.',
     inputSchema: { type: 'object', properties: {}, ...NO_EXTRA },
     annotations: { readOnlyHint: true },
     execute: async () => describeDisplay(),
@@ -235,7 +235,7 @@ export function editionSummary(bridge: ArticleBridge) {
     article: { slug: article.slug, title: article.title[lang] },
     edition: { level: edition.context.level, language: lang, goal: edition.context.goal, minutes: edition.minutes, full_minutes: edition.fullMinutes, blocks: edition.blocks.length + bridge.extras.length, time_budget: edition.context.timeMinutes || 'none' },
     outline: outline(edition, lang).map((s) => ({ section_id: s.id, title: s.title, minutes: s.minutes, blocks: s.blocks })),
-    excluded: excluded.slice(0, 12).map((d) => ({ block_id: d.blockId, why: d.reason })),
+    excluded: excluded.slice(0, 8).map((d) => ({ block_id: d.blockId, why: d.reason })),
     excluded_count: excluded.length,
     concept_gaps: edition.gaps,
     interactives: Object.keys(article.interactives ?? {}),
@@ -382,22 +382,26 @@ export function buildSurface(env: ToolEnv): { name: string; specs: ToolSpec[] } 
     focusSection,
     {
       name: 'read_section',
-      title: 'Read a section as shown',
-      description: 'Return the exact text the reader sees for one section (or the whole edition if no section_id), in the edition language, with block ids so you can refer to them. Cheaper and more faithful than reading the page as a screenshot.',
-      inputSchema: { type: 'object', properties: { section_id: { type: 'string', description: 'Section id from get_edition. Omit for everything.' } }, ...NO_EXTRA },
+      title: 'Map a section (block ids + first sentences)',
+      description: 'The blocks the reader sees in one section (or the whole edition without section_id): block ids, kinds and the first sentence of each, in the edition language. Use it to orient and to pick block ids; call read_block for the full text of one block, or pass full=true for whole texts.',
+      inputSchema: { type: 'object', properties: { section_id: { type: 'string', description: 'Section id from get_edition. Omit for everything.' }, full: { type: 'boolean', description: 'Return full block texts instead of first sentences (larger).' } }, ...NO_EXTRA },
       annotations: { readOnlyHint: true },
       execute: async (input) => {
         const l = lang();
         const sid = input.section_id ? String(input.section_id) : '';
         const blocks = visibleBlocks().filter((b) => !sid || b.id === sid || b.section === sid || (sid === '_intro' && !b.section && b.kind !== 'heading'));
-        if (blocks.length === 0) throw new Error(`No section “${input.section_id}”. Sections: ${outline(bridge.edition, l).map((s) => s.id).join(', ')}`);
-        return { language: l, blocks: blocks.map((b) => ({ block_id: b.id, kind: b.kind, section: b.section, minutes: blockMinutes(b, l), text: b.kind === 'interactive' ? `[interactive ${b.interactive}] ${blockText(b, l)}` : blockText(b, l) })) };
+        if (blocks.length === 0) throw new Error(`No section “${sid}”. Sections: ${outline(bridge.edition, l).map((s) => s.id).join(', ')}`);
+        const first = (t: string) => {
+          const m = t.replace(/\s+/g, ' ').trim().match(/^.{0,160}?[.!?。](\s|$)/);
+          return m ? m[0].trim() : t.replace(/\s+/g, ' ').trim().slice(0, 160);
+        };
+        return { language: l, section: sid || 'all', blocks: blocks.map((b) => ({ block_id: b.id, kind: b.kind, section: b.section ?? '_intro', minutes: blockMinutes(b, l), text: input.full ? (b.kind === 'interactive' ? `[interactive ${b.interactive}] ${blockText(b, l)}` : blockText(b, l)) : first(b.kind === 'interactive' ? `[interactive ${b.interactive}] ${blockText(b, l)}` : blockText(b, l)) })), next_step: input.full ? undefined : 'Call read_block for any block’s full text.' };
       },
     },
     {
       name: 'read_block',
       title: 'Read one block',
-      description: 'Return one block’s text as shown, plus definitions of the concepts it teaches or requires — everything you need to explain it to the reader in your own words.',
+      description: 'Full text of one block as shown, plus definitions of the concepts it teaches or requires — everything you need to explain it in your own words. (read_section maps; read_block reads.)',
       inputSchema: { type: 'object', properties: { block_id: { type: 'string' } }, required: ['block_id'], ...NO_EXTRA },
       annotations: { readOnlyHint: true },
       execute: async (input) => {
@@ -444,7 +448,7 @@ export function buildSurface(env: ToolEnv): { name: string; specs: ToolSpec[] } 
     {
       name: 'expand_section',
       title: 'Add deeper material to a section',
-      description: 'Show the author’s deeper blocks (written for higher levels) inside one section, without changing the rest of the edition. Returns the added blocks.',
+      description: 'Add the author’s deeper blocks (written for higher levels) inside one section, without changing the rest of the edition. Returns the added blocks. (simplify_block goes the other way: plainer.)',
       inputSchema: { type: 'object', properties: { section_id: { type: 'string', description: 'Section id from get_edition.' } }, required: ['section_id'], ...NO_EXTRA },
       execute: async (input) => {
         const added = bridge.expand(String(input.section_id));

@@ -1,6 +1,10 @@
+import { useEffect as useTitleEffect } from 'react';
 import { TopBar } from './Home';
 
 export function About() {
+  useTitleEffect(() => {
+    document.title = 'Make a page that negotiates — Attune';
+  }, []);
   return (
     <div className="container">
       <TopBar />

@@ -16,12 +16,13 @@ interface Props {
   interactives: Record<string, Params>;
   onInteractive: (id: string, params: Params) => void;
   onSimplify: (blockId: string) => void;
+  onUndoSwap?: (originalId: string) => void;
   onExpand: (sectionId: string) => void;
   canExpand: (sectionId: string) => boolean;
   showFriction: boolean;
 }
 
-export function Blocks({ article, blocks, lang, swaps, extras, friction, highlight, focusIds, interactives, onInteractive, onSimplify, onExpand, canExpand, showFriction }: Props) {
+export function Blocks({ article, blocks, lang, swaps, extras, friction, highlight, focusIds, interactives, onInteractive, onSimplify, onUndoSwap, onExpand, canExpand, showFriction }: Props) {
   const t = (en: string, ko: string) => (lang === 'ko' ? ko : en);
   return (
     <div className="blocks">
@@ -34,7 +35,16 @@ export function Blocks({ article, blocks, lang, swaps, extras, friction, highlig
             {showFriction && fr && fr.score > 0 && (
               <span className="fr-dot" title={t(`You paused here (${fr.visibleSeconds}s, re-read ${fr.reReads}×). Your agent can see this if it asks.`, `여기서 멈췄어요 (${fr.visibleSeconds}초, 되읽기 ${fr.reReads}회). 에이전트가 요청하면 볼 수 있습니다.`)} />
             )}
-            {swappedFrom && <span className="tag swap">{t('plainer version', '쉬운 버전')}</span>}
+            {swappedFrom && (
+              <span className="undo">
+                <span className="tag swap">{t('plainer version', '쉬운 버전')}</span>
+                {onUndoSwap && (
+                  <button className="btn xs ghost" onClick={() => onUndoSwap(swappedFrom)}>
+                    {t('original', '원래대로')}
+                  </button>
+                )}
+              </span>
+            )}
             {extras.has(b.id) && <span className="tag deep">{t('deeper', '심화')}</span>}
             <BlockBody b={b} article={article} lang={lang} interactives={interactives} onInteractive={onInteractive} onExpand={onExpand} canExpand={canExpand} onSimplify={onSimplify} />
           </div>

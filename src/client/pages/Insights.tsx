@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useEffect as useTitleEffect } from 'react';
 import { TopBar } from './Home';
 import { bySlug } from '../content';
 
@@ -34,6 +35,9 @@ function Bars({ title, data, total }: { title: string; data: Record<string, numb
 }
 
 export function Insights({ slug }: { slug: string }) {
+  useTitleEffect(() => {
+    document.title = 'What readers asked for — Attune';
+  }, []);
   const [c, setC] = useState<Counters | null>(null);
   const a = bySlug(slug);
   useEffect(() => {

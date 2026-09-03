@@ -8,6 +8,7 @@ import { buildSurface } from '../lib/tools';
 import { navigate } from '../lib/router';
 import { AgentConsole } from '../components/AgentConsole';
 import { EditionPanel } from '../components/EditionPanel';
+import { demoStore } from '../lib/demo';
 
 export function TopBar() {
   const lang = contextStore.get().language;
@@ -29,6 +30,13 @@ const LEVELS: Level[] = ['novice', 'intermediate', 'expert'];
 
 export function Home() {
   const [, force] = useState(0);
+  useEffect(() => demoStore.subscribe(() => force((x) => x + 1)), []);
+  useEffect(() => {
+    document.title = 'Attune — pages that negotiate with your agent';
+    document.documentElement.lang = contextStore.get().language;
+  }, []);
+  const demo = demoStore.running;
+  const startDemo = () => demoStore.start('home');
   useEffect(() => contextStore.subscribe(() => force((x) => x + 1)), []);
   useEffect(() => displayStore.subscribe(() => force((x) => x + 1)), []);
   useEffect(() => {
@@ -48,12 +56,18 @@ export function Home() {
           <h1 className="serif">{t('Pages that ', '')}<em>{t('negotiate', '추적')}</em>{t(' with your agent,', ' 대신 ')}<br />{t('not track you.', '')}<em>{t('', '협상')}</em>{t('', '하는 페이지.')}</h1>
           <p className="lede">
             {t(
-              'Tell your agent how much time you have, what you already know, and what you are trying to do. Each page here composes an edition for you — from the author’s own blocks, never generated — and shows you exactly what it was told. No cookies. No profile. Interactives your agent can operate. A page that notices where you got stuck.',
-              '에이전트에게 시간이 얼마나 있는지, 무엇을 이미 아는지, 무엇을 하려는지 말하세요. 여기 있는 모든 페이지는 저자가 직접 쓴 블록만으로 당신을 위한 판을 구성하고, 무엇을 전달받았는지 그대로 보여줍니다. 쿠키도 프로필도 없습니다. 에이전트가 조작할 수 있는 인터랙티브, 당신이 어디서 막혔는지 알아채는 페이지.',
+              'Sixty-eight, low vision, in bed at night on a phone: “Does a 1% fee matter over 40 years?” Her agent already knows all of that. It tells the page — and the page composes a three-minute, extra-large, dark edition from the author’s own blocks, runs the calculator, and explains every choice. No cookies, no profile, nothing generated.',
+              '68세, 저시력, 밤에 침대에서 폰으로. “수수료 1%가 40년이면 얼마나 차이 나?” 에이전트는 이걸 이미 압니다. 페이지에 말하면, 페이지가 저자의 블록만으로 3분짜리 큰 글씨 다크 판을 구성하고 계산기를 돌리고 모든 선택의 이유를 보여줍니다. 쿠키도 프로필도 생성도 없습니다.',
             )}
           </p>
+          <p className="muted" style={{ margin: '-10px 0 20px', fontSize: 14 }}>
+            {t('Why WebMCP: a header can say “Korean”. Only a tool call can say “three minutes, knows compounding, low vision, dark room” — from the agent that already knows you, with you watching.', '왜 WebMCP인가: 헤더는 “한국어”까지만 말할 수 있습니다. “3분, 복리는 앎, 저시력, 어두운 방”은 당신을 이미 아는 에이전트의 툴 호출만이, 당신이 보는 앞에서 말할 수 있습니다.')}
+          </p>
           <div className="cta">
-            <a className="btn accent" href={`/a/${articles[0]?.slug}`} onClick={(e) => { e.preventDefault(); navigate(`/a/${articles[0]?.slug}`); }}>
+            <button className="btn accent" onClick={startDemo} disabled={!!demo}>
+              {demo ? <span className="spin" /> : '▶'} {t('Watch a 60-second demo (no agent needed)', '60초 자동 시연 보기 (에이전트 없이)')}
+            </button>
+            <a className="btn primary" href={`/a/${articles[0]?.slug}`} onClick={(e) => { e.preventDefault(); navigate(`/a/${articles[0]?.slug}`); }}>
               {t('Read the first article', '첫 번째 기사 읽기')}
             </a>
             <a className="btn" href="/publishers" onClick={(e) => { e.preventDefault(); navigate('/publishers'); }}>
