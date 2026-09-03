@@ -1,57 +1,13 @@
 [
- {
-  "id": "01-title",
-  "caption": "",
-  "text": "This is Attune. Pages that negotiate with your agent, instead of tracking you."
- },
- {
-  "id": "02-problem",
-  "caption": "Two bad options: be tracked, or be summarized.",
-  "text": "Reading with an AI beside you gives you two bad options: let the site track you, or let the AI scrape and summarize, losing the figures, the interactives, the author's voice, sometimes the facts. WebMCP makes a third way possible: the page can simply ask your agent what you need."
- },
- {
-  "id": "03-declare",
-  "caption": "Your agent declares five facets. The page composes an edition from the author's own blocks.",
-  "text": "Here is an article about WebMCP. I tell my agent: I have three minutes, I already know MCP, give me the expert version. The agent calls one tool, declare reader context. The page recomposes itself: a three-minute expert edition, built only from blocks the author wrote, skipping what I already know. The Handshake panel shows exactly what my agent said, and I can change or erase it."
- },
- {
-  "id": "04-korean",
-  "caption": "Level, language, time, goal, known concepts — every decision has a visible reason.",
-  "text": "Now I want the full beginner version, in Korean. One more call. Nothing is generated: every sentence in every edition was written by the author, in both languages. Trimming, ordering and prerequisites are decided by a deterministic composer, and the outline tells you why each block is in or out."
- },
- {
-  "id": "045-needs",
-  "caption": "Your agent already knows how you read best. The page designs the screen for you — and says why.",
-  "text": "The page adapts to the person, not just the topic. My agent knows I have low vision and that I'm reading in a dark room, so it declares that on arrival, before I ask. The page goes dark, the type becomes extra large and hyperlegible, the buttons grow, and every choice is explained. Dyslexia, color blindness, a screen reader, a phone in sunlight: each gets its own answer."
- },
- {
-  "id": "05-friction",
-  "caption": "The page notices where you got stuck. Your agent swaps in the author's plainer version.",
-  "text": "Now the part I love. The page notices, locally, when I re-read a paragraph. My agent can ask where I got stuck, and swap in the author's plainer version of that exact block, right where I am. No rewriting, no hallucination, just the author's own simpler words."
- },
- {
-  "id": "06-interactive",
-  "caption": "Interactives become tools: your agent operates the calculator on the page.",
-  "text": "Interactives stop being pictures. In the compound interest article, I ask: what if I put in five hundred a month for forty years with a one percent fee? The agent sets the calculator's parameters through a tool, the chart on the page changes, and the agent gets the exact numbers I am looking at."
- },
- {
-  "id": "07-author",
-  "caption": "Ask the author: answers in the author's own words, or “not covered”.",
-  "text": "Questions go to the author, not to a guess. Ask author returns the writer's own answers, and says plainly when something was not covered. Then I say forget me, and the page erases everything it knew."
- },
- {
-  "id": "08-publisher",
-  "caption": "For publishers: anonymous demand signals. No identifiers, ever.",
-  "text": "For the publisher, the only thing the server ever stores is a count of which edition shapes readers asked for. What readers asked for, without knowing who they are. That is a new deal between readers, authors and agents, and it runs on nothing but WebMCP and a little structure in the content."
- },
- {
-  "id": "09-how",
-  "caption": "Tool surfaces follow the page. Every result carries a next step.",
-  "text": "Under the hood: two tool surfaces swapped with abort signals, twenty-two tools on an article, read-only hints on reads, a needs-to-design resolver the page owns, a next step in every result, a deterministic composer with unit tests, three original articles at three levels in two languages, and an end-to-end suite that drives every tool like an agent."
- },
- {
-  "id": "10-end",
-  "caption": "",
-  "text": "Attune. Bring your agent. The page will meet you where you are. Attune dot znehraks dot workers dot dev."
- }
+  {"id":"01-title","caption":"","text":"This is Attune. Pages that negotiate with your agent, not track you."},
+  {"id":"02-hook","caption":"Sixty-eight, low vision, in bed at night: “Does a 1% fee matter over 40 years?” Her agent already knows all that.","text":"Sixty-eight years old, low vision, reading in bed at night: does a one percent fee matter over forty years? Her agent already knows all of that. Watch what happens when it tells the page."},
+  {"id":"03-composed","caption":"Two tool calls. A 3-minute edition from the author’s blocks, on a screen designed for her — with reasons.","text":"Two tool calls. The page composed a three-minute edition from the author's own blocks, skipping what she already knows. Nothing generated. And it chose the screen: dark, extra large, hyperlegible, big controls. Every choice has a reason in the panel, and she can change or erase any of it."},
+  {"id":"04-calc","caption":"The calculator is a tool too. The agent gets the same numbers she sees.","text":"The calculator is a tool too. Five hundred a month, forty years, a one percent fee. The chart on the page changes, and the agent gets the exact numbers she is looking at."},
+  {"id":"05-why","caption":"Two bad options today: be tracked, or be summarized. WebMCP makes a third way possible.","text":"Why does this need WebMCP? Reading with an AI beside you used to mean two bad options: let the site track you, or let the AI scrape and summarize, losing the figures, the interactives, the author's voice, sometimes the facts. A header can say Korean. Only a tool call can say three minutes, knows compounding, low vision, dark room, from the agent that already knows you, with you watching."},
+  {"id":"06-levels","caption":"Three levels, two languages, all written by the author. Editions are composed, never generated.","text":"Now the full beginner edition, in Korean. Every sentence in every edition was written by the author, in both languages. A deterministic composer decides trimming, order and prerequisites, and tells you why each block is in or out."},
+  {"id":"07-friction","caption":"The page notices where she got stuck. The agent swaps in the author’s plainer version.","text":"The page notices, locally, when she re-reads a paragraph. Her agent asks where she got stuck, and swaps in the author's plainer version of that exact block, right where she is."},
+  {"id":"08-author","caption":"Ask the author: answers in the author’s own words, or “not covered”. Then: forget me.","text":"Questions go to the author, not to a guess: the author's own written answers, or a plain not covered. And when she says forget me, the page erases everything it knew."},
+  {"id":"09-publisher","caption":"For publishers: anonymous demand signals. No identifiers, ever.","text":"For the publisher, the server only ever stores a count of which editions readers asked for. What they asked for, never who they are. Any site can do this: it is a content model and a dozen small tools, not a platform."},
+  {"id":"10-how","caption":"Tool surfaces follow the page. The page owns the variants; the agent owns the context; the human owns the decision.","text":"Under the hood: two tool surfaces swapped with abort signals, twenty-two tools on an article, read-only hints on reads, descriptions under five hundred characters, a needs-to-design resolver the page owns, three original articles at three levels in two languages, sixteen unit tests, and five end-to-end tests that drive every tool like an agent. There is a judge mode too: one click runs the whole negotiation without an agent."},
+  {"id":"11-end","caption":"","text":"Attune. Bring your agent. The page will meet you where you are. Attune dot znehraks dot workers dot dev."}
 ]

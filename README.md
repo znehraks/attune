@@ -6,7 +6,15 @@ Tell your agent how much time you have, what you already know, and what you're t
 
 It is a small publication (three articles, three levels, two languages) and, more importantly, a **pattern for the open web**: the visitor's agent declares what it already knows about the person through WebMCP — how much time they have, what they know, and **how they read best** (vision, hands, attention, device, lighting); the page answers with a tailored edition built from author-approved blocks **and a screen designed for that person** (type size, contrast, font, spacing, layout, target size, motion, one section at a time); the human sees the whole handshake and can change or erase it.
 
-![Expert, three-minute edition composed by an agent](docs/shots/article-expert-3min-top.png)
+**In one tool call:** the compound-interest article goes from 8.2 minutes / 28 blocks to **2.9 minutes / 12 blocks** for an expert who already knows compounding — and in a second call, from a light serif page to **dark, extra-large, hyperlegible type with big controls** for a low-vision reader in a dark room. Every left-out block and every design choice carries a visible reason.
+
+| Default page | Expert, 3 minutes, knows the basics | Low vision, dark room |
+|---|---|---|
+| ![](docs/shots/article-default.png) | ![](docs/shots/article-expert-3min-top.png) | ![](docs/shots/article-lowvision-dark.png) |
+
+**No agent at hand?** Press **▶ Watch a 60-second demo** on the home page, or open any article with `?judge=1` (e.g. `/a/compound-interest?judge=1`): a scripted demo calls the very same registered tools, with captions, so you see the negotiation without a WebMCP browser.
+
+Tests: 16 unit (edition composer, needs → design) · 5 Playwright e2e that drive every tool through a `document.modelContext` stand-in, on desktop and on a 390-px phone, against both local and production.
 
 ---
 
@@ -24,7 +32,7 @@ It is a small publication (three articles, three levels, two languages) and, mor
 Enable `chrome://flags/#enable-webmcp-testing`, install the [Model Context Tool Inspector](https://chromewebstore.google.com/detail/webmcp-model-context-tool/gbpdfapgefenggkahomfgkhfehlcenpd), open the site and call the tools yourself.
 
 ### With no agent
-The **Handshake** panel on every page does the same thing by hand (level, language, time, goal, known concepts), the **Agent console** lists the live tools and lets you run any of them, and every dense paragraph has a *plainer?* button.
+Press **▶ Watch a 60-second demo** on the home page (or add `?judge=1` to any article URL). The **Handshake** panel on every page does the same thing by hand (level, language, time, goal, known concepts, how you read best, display), the **Agent console** lists the live tools, shows every call — the agent's and yours — and lets you run any tool with its parameter schema, and every dense paragraph has a *plainer?* button with an *original* undo.
 
 > **For judges:** no login, no credentials. Everything a tool can do is visible on the page as it happens. The three articles were written for this challenge (WebMCP, compound interest, GPS), each at three levels in English and Korean, with an interactive component your agent can drive.
 
@@ -40,6 +48,7 @@ Attune tries a third way, which only became possible with WebMCP:
 - **The page designs the screen; the agent does not touch CSS.** From declared needs the page picks among layouts, themes and type scales its designers prepared — dark for a dark room, extra-large hyperlegible type and big targets for low vision, a sepia readable-font edition for dyslexia, a focus layout with one section lit at a time for readers who are easily distracted, color-safe encoding for color blindness, a linear layout for screen readers. Every choice carries a reason. Explicit preferences ("darker", "bigger") override the inference.
 - **The page composes, deterministically, from author-written blocks.** Filter by level, pull in prerequisites the reader lacks, skip what they know, trim lower-priority blocks to the time budget, drop empty sections. Every block gets a reason. No model rewrites a word.
 - **The page stays a page.** Figures stay figures, calculators recalculate with the parameters your agent sets, and the author's "plainer version" of a hard paragraph is one tool call away — at the spot where the page noticed you re-reading.
+- **Adoption is a content model, not a platform.** An existing article becomes Attune-ready by splitting it into blocks and adding facets (`levels`, `priority`, `teaches`, `requires`, `goals`, `simplerOf`) — `src/client/content/AUTHORING.md` is the whole guide, `scripts/validate-article.mjs` checks the result, and `src/shared/content.ts` is a dependency-free composer any site can copy. The tool surface is a dozen small, read-mostly tools any page can register.
 - **The author learns, anonymously.** The only thing the server stores is a count of which edition shapes were requested — see *"what readers asked for"* under any article. No identifiers, ever.
 
 ## Why WebMCP fits (the four submission questions)
@@ -59,6 +68,7 @@ Attune tries a third way, which only became possible with WebMCP:
 Design notes that matter for agents:
 
 - `declare_reader_needs` is written to be called **on arrival, before the person asks**, from the agent's own memory (vision, motor, reading, device, lighting). The page maps needs to a design with reasons (`src/shared/needs.ts`); `set_display` records explicit preferences that win over the inference; `focus_section` lights one section and dims the rest.
+- Tool hygiene: descriptions under 500 characters (the Chrome security guide's recommendation), `read_section` returns a map (block ids + first sentences) and `read_block` the full text, so a typical result stays small; overlapping tools state their roles.
 - `get_edition` is the one-call briefing: level, language, minutes vs. full minutes, outline with section ids and minutes, which blocks were left out and why, concept gaps, available interactives, current reading friction, and a `next_step`.
 - `read_section` returns the exact text the human sees, with block ids — cheaper and more faithful than a screenshot, and the basis for explaining anything.
 - `declare_reader_context` merges; `knows`/`unknown` are unioned; the result includes the recomposed outline so the agent can tell the reader what changed.

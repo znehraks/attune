@@ -31,115 +31,107 @@ const mark = (id) => { marks[id] = (Date.now() - t0) / 1000; console.log('scene'
 const until = (id, startedAt, extra = 0) => sleep(Math.max(0, S[id].audio * 1000 + extra - (Date.now() - startedAt)));
 const SUB = 'Tool calls driven by a test harness through the page’s WebMCP API here — ChatGPT calls the same tools.';
 
+await A.goto(base + '/a/compound-interest');
+await A.waitForSelector('text=WebMCP detected');
+await agent(A, 'forget_me');
+await sleep(500);
+
+// S2 hook — action within the first seconds: needs + context declared on arrival
+let st = Date.now(); mark('02-hook');
+await cap(A, S['02-hook'].caption, SUB);
+await sleep(3200);
+await agent(A, 'declare_reader_needs', { vision: 'low-vision', light: 'dark-room', device: 'phone', note: 'set from what you told me earlier' });
+await sleep(1800);
+await agent(A, 'declare_reader_context', { level: 'intermediate', language: 'en', time_minutes: 3, goal: 'decide', knows: ['compounding'], note: 'you asked for the 3-minute version' });
+await until('02-hook', st, 300);
+
+// S3 composed — show edition + reasons
+st = Date.now(); mark('03-composed');
+await cap(A, S['03-composed'].caption, SUB);
+await sleep(2500);
+await A.mouse.wheel(0, 300); await sleep(3500);
+await A.mouse.wheel(0, 300); await sleep(3500);
+await A.evaluate(() => document.querySelector('.handshake')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+await sleep(3000);
+await A.mouse.wheel(0, -900);
+await until('03-composed', st, 300);
+
+// S4 calculator
+st = Date.now(); mark('04-calc');
+await cap(A, S['04-calc'].caption, SUB);
+await agent(A, 'declare_reader_context', { time_minutes: 0 });
+await sleep(800);
+await A.evaluate(() => document.querySelector('.interactive-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+await sleep(2200);
+await agent(A, 'set_interactive', { id: 'compound-calculator', params: { monthly: 500, years: 40, fee: 1 } });
+await sleep(2500);
+await agent(A, 'get_interactive', { id: 'compound-calculator' });
+await until('04-calc', st, 300);
+
+// S5 why — reset display, show the home page copy
+st = Date.now(); mark('05-why');
+await agent(A, 'declare_reader_needs', { vision: 'typical', light: 'normal', device: 'unknown' });
+await agent(A, 'set_display', { preset: 'default' });
 await A.goto(base + '/');
 await A.waitForSelector('text=WebMCP detected');
-await A.evaluate(() => window.__agent.call('forget_me'));
-await sleep(600);
-
-// S2 problem — landing
-let st = Date.now(); mark('02-problem');
-await cap(A, S['02-problem'].caption);
-await sleep(6000);
+await cap(A, S['05-why'].caption);
+await sleep(7000);
+await A.mouse.wheel(0, 500); await sleep(6000);
 await A.mouse.wheel(0, 500); await sleep(5000);
-await A.mouse.wheel(0, 500); await sleep(4500);
-await A.mouse.wheel(0, -1000); await sleep(1000);
-await until('02-problem', st, 300);
+await until('05-why', st, 300);
 
-// S3 declare — open the WebMCP article, declare expert/3min/knows mcp
-st = Date.now(); mark('03-declare');
-await cap(A, S['03-declare'].caption, SUB);
+// S6 levels — Korean novice full edition on the WebMCP article
+st = Date.now(); mark('06-levels');
+await cap(A, S['06-levels'].caption, SUB);
 await agent(A, 'open_article', { slug: 'webmcp' });
 await A.waitForURL(/\/a\/webmcp/);
-await cap(A, S['03-declare'].caption, SUB);
-await sleep(5000);
-await agent(A, 'declare_reader_context', { level: 'expert', language: 'en', time_minutes: 3, knows: ['mcp'], note: 'you asked for the 3-minute expert version' });
-await sleep(4500);
-await A.mouse.wheel(0, 350); await sleep(3500);
-await A.mouse.wheel(0, 350); await sleep(3000);
-await A.mouse.wheel(0, -700);
-await until('03-declare', st, 300);
-
-// S4 korean novice full
-st = Date.now(); mark('04-korean');
-await cap(A, S['04-korean'].caption, SUB);
-await sleep(1500);
+await cap(A, S['06-levels'].caption, SUB);
+await sleep(1200);
 await agent(A, 'declare_reader_context', { level: 'novice', language: 'ko', time_minutes: 0 });
-await sleep(4000);
-await A.mouse.wheel(0, 400); await sleep(3500);
+await sleep(3500);
 await A.mouse.wheel(0, 400); await sleep(3000);
-await until('04-korean', st, 300);
+await A.mouse.wheel(0, 400); await sleep(2500);
+await until('06-levels', st, 300);
 
-// S4.5 needs — low vision in a dark room, declared by the agent on arrival
-st = Date.now(); mark('045-needs');
-await cap(A, S['045-needs'].caption, SUB);
-await agent(A, 'declare_reader_context', { level: 'intermediate', language: 'en', time_minutes: 0 });
-await sleep(2500);
-await agent(A, 'declare_reader_needs', { vision: 'low-vision', light: 'dark-room', note: 'set from what you told me earlier' });
-await sleep(4000);
-await A.mouse.wheel(0, 300); await sleep(2500);
-await A.mouse.wheel(0, -300); await sleep(800);
-await agent(A, 'declare_reader_needs', { vision: 'typical', light: 'normal', reading: 'easily-distracted' });
-await sleep(3000);
-await agent(A, 'declare_reader_needs', { reading: 'typical' });
-await agent(A, 'set_display', { preset: 'default', layout: 'standard', show_panels: true, theme: 'light', text_size: 'normal', font: 'serif', spacing: 'normal', targets: 'normal', spotlight: false, reduced_motion: false });
-await until('045-needs', st, 300);
-
-// S5 friction → simplify (english intermediate so the simplify target has a plainer version)
-st = Date.now(); mark('05-friction');
-await cap(A, S['05-friction'].caption, SUB);
+// S7 friction → simplify (english intermediate)
+st = Date.now(); mark('07-friction');
+await cap(A, S['07-friction'].caption, SUB);
 await agent(A, 'declare_reader_context', { level: 'intermediate', language: 'en', time_minutes: 0 });
 await sleep(800);
 const sec = await agent(A, 'read_section');
-const withSimpler = (await agent(A, 'get_edition')).outline;
-// find a visible block that has a simpler version: try read_block on paragraphs until has_simpler_version
 let target = null;
 for (const b of sec.blocks.filter((x) => x.kind === 'para')) { const rb = await agent(A, 'read_block', { block_id: b.block_id }); if (rb.has_simpler_version) { target = b.block_id; break; } }
 if (!target) target = sec.blocks.find((x) => x.kind === 'para')?.block_id;
-await scrollToBlock(A, target); await sleep(2500);
-await A.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })); await sleep(3000);
 await scrollToBlock(A, target); await sleep(1800);
+await A.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })); await sleep(2600);
+await scrollToBlock(A, target); await sleep(1200);
 await agent(A, 'get_reading_friction');
-await sleep(1500);
-await agent(A, 'simplify_block', { block_id: target });
-await sleep(2500);
-await until('05-friction', st, 300);
-
-// S6 interactive — compound calculator
-st = Date.now(); mark('06-interactive');
-await cap(A, S['06-interactive'].caption, SUB);
-await agent(A, 'open_article', { slug: 'compound-interest' });
-await A.waitForURL(/compound-interest/);
-await cap(A, S['06-interactive'].caption, SUB);
-await sleep(1500);
-await A.evaluate(() => document.querySelector('.interactive-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-await sleep(3500);
-await agent(A, 'set_interactive', { id: 'compound-calculator', params: { monthly: 500, years: 40, fee: 1 } });
-await sleep(3000);
-await agent(A, 'get_interactive', { id: 'compound-calculator' });
-await until('06-interactive', st, 300);
-
-// S7 ask author + forget
-st = Date.now(); mark('07-author');
-await cap(A, S['07-author'].caption, SUB);
-await A.evaluate(() => document.querySelector('.console')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 await sleep(800);
-await agent(A, 'ask_author', { question: 'Does inflation matter here?' });
-await sleep(3500);
-await agent(A, 'ask_author', { question: 'What is the airspeed velocity of an unladen swallow?' });
-await sleep(2500);
-await agent(A, 'forget_me');
-await until('07-author', st, 300);
+await agent(A, 'simplify_block', { block_id: target });
+await until('07-friction', st, 300);
 
-// S8 publisher insights
-st = Date.now(); mark('08-publisher');
-await cap(A, S['08-publisher'].caption);
-await A.goto(base + '/insights/webmcp');
-await cap(A, S['08-publisher'].caption);
-await sleep(7000);
+// S8 author + forget
+st = Date.now(); mark('08-author');
+await cap(A, S['08-author'].caption, SUB);
+await A.evaluate(() => document.querySelector('.console')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+await sleep(700);
+await agent(A, 'ask_author', { question: 'Does this work inside an iframe?' });
+await sleep(3200);
+await agent(A, 'ask_author', { question: 'What is the airspeed velocity of an unladen swallow?' });
+await sleep(2200);
+await agent(A, 'forget_me');
+await until('08-author', st, 300);
+
+// S9 publisher insights
+st = Date.now(); mark('09-publisher');
+await cap(A, S['09-publisher'].caption);
+await A.goto(base + '/insights/compound-interest');
+await cap(A, S['09-publisher'].caption);
+await sleep(5500);
 await A.goto(base + '/publishers');
-await cap(A, S['08-publisher'].caption);
-await until('08-publisher', st, 300);
-mark('08-end');
+await cap(A, S['09-publisher'].caption);
+await until('09-publisher', st, 300);
+mark('09-end');
 await cap(A, '');
 await sleep(500);
 const videoA = await A.video().path();

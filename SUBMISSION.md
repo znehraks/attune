@@ -13,7 +13,7 @@ Deadline: **September 3, 2026, 1:00 PM PDT** (= September 4, 05:00 KST). Submit 
 | Description | paste `DESCRIPTION.md` |
 
 ## Testing instructions
-No login or credentials needed.
+No login or credentials needed. No agent? Press "▶ Watch a 60-second demo" on the home page, or open https://attune.znehraks.workers.dev/a/compound-interest?judge=1 — a scripted demo drives the same registered tools with captions.
 1. ChatGPT desktop app → built-in browser (model Sol or Terra) → https://attune.znehraks.workers.dev
 2. Say: "I have three minutes, I'm a web developer who already knows MCP, and I read Korean. Open the WebMCP article." The page composes a 3-minute expert edition in Korean; the Handshake panel shows what was declared.
 3. Say: "I have low vision and I'm reading in a dark room" — the page turns dark with extra-large hyperlegible type and big controls; the Handshake panel explains each choice. (Agents that already know this about the person are asked by the tool description to declare it on arrival.)

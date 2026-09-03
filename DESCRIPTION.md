@@ -8,6 +8,9 @@
 ## Inspiration
 Every reader who opens an article with an AI beside them faces the same two bad options: let the site track them into a "personalized" experience, or let the AI scrape and summarize — losing the figures, the interactives, the author's voice, and sometimes the facts. WebMCP suggested a third way. The reader's agent already knows how much time the person has, what they know, and what they're trying to do. What if the page could simply ask?
 
+## The first 15 seconds
+Sixty-eight, low vision, in bed at night on a phone: “Does a 1% fee matter over 40 years?” Her agent already knows all of that. Two tool calls later the compound-interest article is a 2.9-minute edition (from 8.2 minutes / 28 blocks to 12 blocks, skipping what she knows), dark, extra-large, hyperlegible, big controls — and the calculator on the page shows the answer: 500 a month for 40 years at 7% loses about a fifth of the final value to a 1% fee. Nothing was generated; the page picked from what its author and designers prepared, and says why.
+
 ## What it does
 Attune is a small publication (three articles, three levels, English and Korean, each with an interactive) built on a pattern any site could adopt. A visitor's agent declares what it already knows about the person — level, language, time budget, goal, concepts already known, and how they read best: vision, hands, attention, device, lighting — through WebMCP tools, on arrival, before the person asks. The page composes an **edition**: author-written blocks filtered by level, prerequisites pulled in, known material skipped, lower-priority blocks trimmed to the time budget. Every decision has a visible reason, and the Handshake panel shows exactly what the page was told, by whom, and when — editable and erasable by the reader.
 
@@ -24,13 +27,16 @@ The Handshake panel works by hand for people without agents, but nobody wants to
 ## What it makes newly possible
 Content that adapts without tracking and without hallucination: the page owns the variants, the agent owns the context, the human owns the decision. Publishers learn what readers want, in aggregate, without surveillance.
 
+## For judges without an agent
+Press **▶ Watch a 60-second demo** on the home page, or open `/a/compound-interest?judge=1`: a scripted demo drives the same registered tools with captions. The Handshake panel does everything by hand; the Agent console shows every call, the agent's and yours.
+
 ## How we built it
 - **WebMCP**: `document.modelContext.registerTool()` with `AbortSignal` surfaces (home: 8 tools; article: 22), a needs → design resolver the page owns, surface names that encode the edition (`article:webmcp:expert:ko`), `readOnlyHint` on reads, loose schemas with strict validation and self-correcting errors, `next_step` in every result.
 - **Composer**: a deterministic, explainable edition composer (`src/shared/content.ts`) with unit tests; a validation script that prints edition sizes for every level/language/time budget.
 - **Content**: three original articles (WebMCP, compound interest, GPS) — ~40 blocks each, three levels, two languages, author FAQs, inline SVG figures, an interactive per article with a declared parameter schema.
 - **Frontend**: React 19 + TypeScript + Vite; Handshake panel; friction tracker (IntersectionObserver, local only); Agent console showing live tools and every call.
 - **Backend**: Cloudflare Workers + a Durable Object per article holding identifier-free counters.
-- **Tests**: Vitest for the composer; Playwright e2e that installs a faithful `document.modelContext` stand-in and drives every tool like an agent, including the friction → simplify loop.
+- **Tests**: Vitest for the composer and the needs → design resolver (16); Playwright e2e (5) that installs a faithful `document.modelContext` stand-in and drives every tool like an agent — the friction → simplify loop, the needs handshake, judge mode, and a 390-px phone — against local and production.
 
 ## Challenges
 Designing a content model that is expressive enough for real articles yet deterministic; writing the same idea honestly at three levels; keeping tool results small but sufficient; making friction detection useful without being creepy (local only, visible, switchable).
