@@ -8,7 +8,7 @@ Deadline: **September 3, 2026, 1:00 PM PDT** (= September 4, 05:00 KST). Submit 
 | Tagline | Pages that negotiate with your agent, not track you — words and screen composed for how you read, from the author's own blocks, through WebMCP. |
 | Live URL | https://attune.znehraks.workers.dev |
 | Repository | https://github.com/znehraks/attune (public, MIT) |
-| Demo video | upload `docs/video/attune-demo.mp4` to YouTube (public or unlisted), paste the link |
+| Demo video | upload `docs/video/attune-demo.mp4` to YouTube as **Public** (<3 minutes, with audio), paste the link |
 | Built with | webmcp, typescript, react, vite, cloudflare-workers, durable-objects, playwright, vitest |
 | Description | paste `DESCRIPTION.md` |
 
